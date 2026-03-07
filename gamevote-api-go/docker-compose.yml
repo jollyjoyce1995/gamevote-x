@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  gamevote-api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SURREAL_WS=ws://surrealdb:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASS=root
+      - SURREAL_NS=gamevote
+      - SURREAL_DB=gamevote
+    depends_on:
+      - surrealdb
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    ports:
+      - "8000:8000"
+    command: start --log trace --user root --pass root file://data/database.db
+    volumes:
+      - ./surreal-data:/data

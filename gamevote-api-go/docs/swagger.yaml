@@ -1,0 +1,525 @@
+basePath: /
+definitions:
+  handler.BeerDTO:
+    properties:
+      attendee:
+        type: string
+    type: object
+  handler.PatchPartyRequest:
+    properties:
+      status:
+        type: string
+    type: object
+  handler.StringValue:
+    properties:
+      value:
+        type: string
+    type: object
+  models.Party:
+    properties:
+      attendees:
+        items:
+          type: string
+        type: array
+      code:
+        type: string
+      id:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+      pollId:
+        type: string
+      results:
+        additionalProperties:
+          type: integer
+        type: object
+      status:
+        $ref: '#/definitions/models.PartyStatus'
+    type: object
+  models.PartyStatus:
+    enum:
+    - NOMINATION
+    - VOTING
+    - RESULTS
+    type: string
+    x-enum-varnames:
+    - PartyStatusNomination
+    - PartyStatusVoting
+    - PartyStatusResults
+  models.Poll:
+    properties:
+      attendees:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+      status:
+        $ref: '#/definitions/models.PollStatus'
+    type: object
+  models.PollStatus:
+    enum:
+    - IN_PROGRESS
+    - COMPLETED
+    type: string
+    x-enum-varnames:
+    - PollStatusInProgress
+    - PollStatusCompleted
+  service.Link:
+    properties:
+      href:
+        type: string
+    type: object
+  service.PartyDTO:
+    properties:
+      _links:
+        additionalProperties:
+          $ref: '#/definitions/service.Link'
+        type: object
+      attendees:
+        items:
+          type: string
+        type: array
+      beerCount:
+        type: integer
+      beerPerAttendee:
+        additionalProperties:
+          type: integer
+        type: object
+      code:
+        type: string
+      id:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+      results:
+        additionalProperties:
+          type: integer
+        type: object
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for the GameVote application to manage parties, polls, and votes.
+  title: GameVote API
+  version: "1.0"
+paths:
+  /parties:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new party with a generated 6-character code
+      parameters:
+      - description: Party details
+        in: body
+        name: party
+        required: true
+        schema:
+          $ref: '#/definitions/models.Party'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.PartyDTO'
+      summary: Create a new party
+      tags:
+      - parties
+  /parties/{code}:
+    get:
+      description: Get a party by its code
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.PartyDTO'
+      summary: Get a party
+      tags:
+      - parties
+    patch:
+      consumes:
+      - application/json
+      description: Update a party status
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Patch Request
+        in: body
+        name: patchReq
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PatchPartyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.PartyDTO'
+      summary: Patch a party
+      tags:
+      - parties
+  /parties/{code}/attendees:
+    get:
+      description: Get attendees for a specific party
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get party attendees
+      tags:
+      - parties
+    post:
+      consumes:
+      - application/json
+      description: Add an attendee to a party
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Attendee Name
+        in: body
+        name: value
+        required: true
+        schema:
+          $ref: '#/definitions/handler.StringValue'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StringValue'
+      summary: Add an attendee
+      tags:
+      - parties
+  /parties/{code}/attendees/{attendeeId}:
+    delete:
+      description: Delete an attendee from a party by index
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Attendee Index
+        in: path
+        name: attendeeId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+      summary: Delete an attendee
+      tags:
+      - parties
+  /parties/{code}/beers:
+    post:
+      consumes:
+      - application/json
+      description: Add a beer for an attendee in a party
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Beer Details
+        in: body
+        name: beer
+        required: true
+        schema:
+          $ref: '#/definitions/handler.BeerDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Add a beer
+      tags:
+      - parties
+  /parties/{code}/options:
+    get:
+      description: Get options for a specific party
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get party options
+      tags:
+      - parties
+    post:
+      consumes:
+      - application/json
+      description: Add an option to a party
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Option Value
+        in: body
+        name: value
+        required: true
+        schema:
+          $ref: '#/definitions/handler.StringValue'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StringValue'
+      summary: Add an option
+      tags:
+      - parties
+  /parties/{code}/options/{optionId}:
+    delete:
+      description: Delete an option from a party by index
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Option Index
+        in: path
+        name: optionId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+      summary: Delete an option
+      tags:
+      - parties
+  /polls:
+    get:
+      description: Retrieve a list of all polls
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Poll'
+            type: array
+      summary: Get all polls
+      tags:
+      - polls
+    post:
+      consumes:
+      - application/json
+      description: Create a new poll manually
+      parameters:
+      - description: Poll Details
+        in: body
+        name: poll
+        required: true
+        schema:
+          $ref: '#/definitions/models.Poll'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Poll'
+      summary: Create a poll
+      tags:
+      - polls
+  /polls/{id}:
+    get:
+      description: Get a poll by its ID
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Poll'
+      summary: Get a poll
+      tags:
+      - polls
+    put:
+      consumes:
+      - application/json
+      description: Update a poll details (used to resume or complete)
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Poll Details
+        in: body
+        name: poll
+        required: true
+        schema:
+          $ref: '#/definitions/models.Poll'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Poll'
+      summary: Update a poll
+      tags:
+      - polls
+  /polls/{id}/outstanding:
+    get:
+      description: Get attendees who have not yet voted
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get outstanding voters
+      tags:
+      - polls
+  /polls/{id}/results:
+    get:
+      description: Get aggregated poll results
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Get poll results
+      tags:
+      - polls
+  /polls/{id}/votes:
+    get:
+      description: Get votes mapping the attendee to their choices
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              additionalProperties:
+                type: integer
+              type: object
+            type: object
+      summary: Get all votes
+      tags:
+      - polls
+  /polls/{id}/votes/{attendee}:
+    put:
+      consumes:
+      - application/json
+      description: Submit a vote for an attendee
+      parameters:
+      - description: Poll ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attendee Name
+        in: path
+        name: attendee
+        required: true
+        type: string
+      - description: Choices (-1, 0, or 1)
+        in: body
+        name: choices
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Submit a vote
+      tags:
+      - polls
+swagger: "2.0"
