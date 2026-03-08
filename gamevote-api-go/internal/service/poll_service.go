@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gamevote-api-go/internal/models"
 	"gamevote-api-go/internal/storage"
+	"log/slog"
 	"sort"
 )
 
@@ -18,6 +19,7 @@ func NewPollService(pollRepo *storage.PollRepository, voteRepo *storage.VoteRepo
 
 func (s *PollService) Create(poll *models.Poll) (*models.Poll, error) {
 	poll.Status = models.PollStatusInProgress
+	slog.Info("Creating new poll", "options_count", len(poll.Options))
 	err := s.PollRepo.Save(poll)
 	return poll, err
 }
@@ -105,7 +107,7 @@ func (s *PollService) AddVote(id string, attendee string, choices map[string]int
 	for choiceKey := range choices {
 		validOption := false
 		for _, o := range poll.Options {
-			if o == choiceKey {
+			if o.Name == choiceKey {
 				validOption = true
 				break
 			}
@@ -128,10 +130,10 @@ func (s *PollService) AddVote(id string, attendee string, choices map[string]int
 
 	normalizedChoices := make(map[string]int)
 	for _, option := range poll.Options {
-		if val, exists := choices[option]; exists {
-			normalizedChoices[option] = val
+		if val, exists := choices[option.Name]; exists {
+			normalizedChoices[option.Name] = val
 		} else {
-			normalizedChoices[option] = 0
+			normalizedChoices[option.Name] = 0
 		}
 	}
 
@@ -164,9 +166,11 @@ func (s *PollService) AddVote(id string, attendee string, choices map[string]int
 	}
 
 	if allVoted {
+		slog.Info("All attendees voted, completing poll", "id", id)
 		poll.Status = models.PollStatusCompleted
 		err = s.PollRepo.Save(poll)
 		if err != nil {
+			slog.Error("Failed to complete poll", "id", id, "error", err)
 			return nil, err
 		}
 	}
@@ -194,9 +198,9 @@ func (s *PollService) GetResults(id string) (map[string]int, error) {
 	for _, option := range poll.Options {
 		sum := 0
 		for _, attendeeVotes := range votesMap {
-			sum += attendeeVotes[option]
+			sum += attendeeVotes[option.Name]
 		}
-		results = append(results, optionResult{name: option, score: sum})
+		results = append(results, optionResult{name: option.Name, score: sum})
 	}
 
 	// Sort by descending

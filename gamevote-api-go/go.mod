@@ -3,6 +3,8 @@ module gamevote-api-go
 go 1.25.5
 
 require (
+	github.com/Jleagle/steam-go v0.0.0-20260108213202-2dcd07fee7d7
+	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.12.0
 	github.com/joho/godotenv v1.5.1
 	github.com/ostafen/clover/v2 v2.0.0-alpha.3
@@ -13,7 +15,9 @@ require (
 )
 
 require (
+	github.com/Jleagle/unmarshal-go v0.0.0-20210227002040-694f544f9265 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
@@ -50,6 +54,7 @@ require (
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect

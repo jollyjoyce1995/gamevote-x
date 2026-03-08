@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"log/slog"
+
 	"github.com/surrealdb/surrealdb.go"
 )
 
@@ -20,6 +22,7 @@ func InitDB() error {
 	if err != nil {
 		return fmt.Errorf("failed to open surreal connection: %w", err)
 	}
+	slog.Info("Connected to SurrealDB", "url", wsUrl)
 
 	DB = db
 
@@ -46,6 +49,26 @@ func InitDB() error {
 
 	if err = DB.Use(context.Background(), ns, dbName); err != nil {
 		return fmt.Errorf("failed to use namespace/db: %w", err)
+	}
+	slog.Info("Using namespace and database", "ns", ns, "db", dbName)
+
+	// Initialize tables
+	repos := []interface {
+		InitTable() error
+	}{
+		&BeerRepository{},
+		&DrinkTypeRepository{},
+		&GameRepository{},
+		&PartyRepository{},
+		&PollRepository{},
+		&UserRepository{},
+		&VoteRepository{},
+	}
+
+	for _, r := range repos {
+		if err := r.InitTable(); err != nil {
+			return fmt.Errorf("failed to initialize table: %w", err)
+		}
 	}
 
 	return nil

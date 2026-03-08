@@ -15,39 +15,53 @@ definitions:
       value:
         type: string
     type: object
-  models.Party:
+  handler.UserLoginRequest:
     properties:
-      attendees:
-        items:
-          type: string
-        type: array
-      code:
+      username:
         type: string
+    required:
+    - username
+    type: object
+  models.DrinkType:
+    properties:
+      alcoholPercent:
+        description: Percentage, e.g., 5.0 for 5%
+        type: number
+      beerEquivalent:
+        description: How many beers this equates to
+        type: number
       id:
         type: string
-      options:
-        items:
-          type: string
-        type: array
-      pollId:
+      name:
         type: string
-      results:
-        additionalProperties:
-          type: integer
-        type: object
-      status:
-        $ref: '#/definitions/models.PartyStatus'
+      unitName:
+        description: e.g. "Halber Liter", "Shot", "Achtel"
+        type: string
+      volumeMl:
+        type: integer
     type: object
-  models.PartyStatus:
-    enum:
-    - NOMINATION
-    - VOTING
-    - RESULTS
-    type: string
-    x-enum-varnames:
-    - PartyStatusNomination
-    - PartyStatusVoting
-    - PartyStatusResults
+  models.Game:
+    properties:
+      appId:
+        type: integer
+      id:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+    type: object
+  models.Party:
+    type: object
+  models.PartyOption:
+    properties:
+      appId:
+        type: integer
+      imageUrl:
+        type: string
+      name:
+        type: string
+    type: object
   models.Poll:
     properties:
       attendees:
@@ -58,7 +72,7 @@ definitions:
         type: string
       options:
         items:
-          type: string
+          $ref: '#/definitions/models.PartyOption'
         type: array
       status:
         $ref: '#/definitions/models.PollStatus'
@@ -71,6 +85,17 @@ definitions:
     x-enum-varnames:
     - PollStatusInProgress
     - PollStatusCompleted
+  models.User:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      lastLogin:
+        type: string
+      username:
+        type: string
+    type: object
   service.Link:
     properties:
       href:
@@ -98,7 +123,7 @@ definitions:
         type: string
       options:
         items:
-          type: string
+          $ref: '#/definitions/models.PartyOption'
         type: array
       results:
         additionalProperties:
@@ -114,7 +139,78 @@ info:
   title: GameVote API
   version: "1.0"
 paths:
+  /drinks/presets:
+    get:
+      description: Get a list of all preset drinks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DrinkType'
+            type: array
+      summary: Get preset drinks
+      tags:
+      - drinks
+    post:
+      consumes:
+      - application/json
+      description: Create a new custom drink preset saving it to the database
+      parameters:
+      - description: Drink Type Details
+        in: body
+        name: drinkType
+        required: true
+        schema:
+          $ref: '#/definitions/models.DrinkType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DrinkType'
+      summary: Add custom drink preset
+      tags:
+      - drinks
+  /games:
+    get:
+      description: Search the cached Steam game list by name
+      parameters:
+      - description: Search Query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Game'
+            type: array
+      summary: Search games
+      tags:
+      - games
   /parties:
+    get:
+      description: Get all parties ordered by ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.PartyDTO'
+            type: array
+      summary: Get all parties
+      tags:
+      - parties
     post:
       consumes:
       - application/json
@@ -304,40 +400,60 @@ paths:
         name: code
         required: true
         type: string
-      - description: Option Value
+      - description: Option Details
         in: body
-        name: value
+        name: option
         required: true
         schema:
-          $ref: '#/definitions/handler.StringValue'
+          $ref: '#/definitions/models.PartyOption'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.StringValue'
+            $ref: '#/definitions/models.PartyOption'
       summary: Add an option
       tags:
       - parties
-  /parties/{code}/options/{optionId}:
+  /parties/{code}/options/{gameName}:
     delete:
-      description: Delete an option from a party by index
+      description: Delete an option from a party by its name
       parameters:
       - description: Party Code
         in: path
         name: code
         required: true
         type: string
-      - description: Option Index
+      - description: Game Name
         in: path
-        name: optionId
+        name: gameName
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: OK
       summary: Delete an option
+      tags:
+      - parties
+  /parties/{code}/stream:
+    get:
+      description: Opens a Server-Sent Events stream for real-time party updates
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Username of the connected client
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses: {}
+      summary: SSE stream for a party
       tags:
       - parties
   /polls:
@@ -522,4 +638,40 @@ paths:
       summary: Submit a vote
       tags:
       - polls
+  /users:
+    get:
+      description: Returns a list of all registered users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user by username. If they do not exist, they are created.
+      parameters:
+      - description: Login Request
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: Login or Register a User
+      tags:
+      - users
 swagger: "2.0"

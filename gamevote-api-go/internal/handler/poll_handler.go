@@ -5,6 +5,8 @@ import (
 	"gamevote-api-go/internal/service"
 	"net/http"
 
+	"log/slog"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,9 +36,11 @@ func (h *PollHandler) CreatePoll(c *gin.Context) {
 
 	created, err := h.PollService.Create(&poll)
 	if err != nil {
+		slog.Error("Failed to create poll", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Poll created successfully", "id", created.ID)
 
 	c.JSON(http.StatusOK, created)
 }
@@ -96,9 +100,11 @@ func (h *PollHandler) PutPoll(c *gin.Context) {
 
 	updated, err := h.PollService.UpdatePoll(&poll)
 	if err != nil {
+		slog.Error("Failed to update poll", "id", id, "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Poll updated successfully", "id", id)
 
 	c.JSON(http.StatusOK, updated)
 }
@@ -162,9 +168,11 @@ func (h *PollHandler) PutVote(c *gin.Context) {
 
 	normalized, err := h.PollService.AddVote(id, attendee, choices)
 	if err != nil {
+		slog.Error("Failed to add vote", "id", id, "attendee", attendee, "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Vote added successfully", "id", id, "attendee", attendee)
 
 	c.JSON(http.StatusOK, normalized)
 }

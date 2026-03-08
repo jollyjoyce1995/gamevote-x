@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gamevote-api-go/internal/models"
 
+	"log/slog"
+
 	"github.com/surrealdb/surrealdb.go"
 )
 
@@ -13,12 +15,15 @@ type PollRepository struct{}
 func (r *PollRepository) Save(poll *models.Poll) error {
 	ctx := context.Background()
 	if poll.ID == "" {
+		slog.Debug("Creating new poll in DB")
 		res, err := surrealdb.Create[models.Poll](ctx, DB, "polls", poll)
 		if err == nil && res != nil {
 			poll.ID = res.ID
 		}
 		return err
 	}
+
+	slog.Debug("Updating poll in DB", "id", poll.ID)
 
 	_, err := surrealdb.Update[models.Poll](ctx, DB, poll.ID, poll)
 	return err
@@ -46,4 +51,24 @@ func (r *PollRepository) FindByID(id string) (*models.Poll, error) {
 		return nil, fmt.Errorf("poll not found")
 	}
 	return res, nil
+}
+
+func (r *PollRepository) InitTable() error {
+	ctx := context.Background()
+	query := `
+		IF (SELECT VALUE id FROM (INFO FOR DB).tables.polls) == NONE {
+			DEFINE TABLE polls SCHEMAFULL;
+			DEFINE FIELD options ON TABLE polls TYPE array<object>;
+			DEFINE FIELD attendees ON TABLE polls TYPE array<string>;
+			DEFINE FIELD status ON TABLE polls TYPE string ASSERT $value INSIDE ['IN_PROGRESS', 'COMPLETED'];
+		};
+	`
+	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
+	return err
+}
+
+func (r *PollRepository) DeleteAll() error {
+	ctx := context.Background()
+	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE polls", nil)
+	return err
 }

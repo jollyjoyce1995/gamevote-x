@@ -1,20 +1,101 @@
 package handler
 
 import (
+	"fmt"
+	"gamevote-api-go/internal/helpers"
 	"gamevote-api-go/internal/models"
 	"gamevote-api-go/internal/service"
 	"net/http"
 	"strconv"
+	"time"
+
+	"log/slog"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PartyHandler struct {
 	PartyService *service.PartyService
+	Broker       *service.SSEBroker
 }
 
-func NewPartyHandler(partyService *service.PartyService) *PartyHandler {
-	return &PartyHandler{PartyService: partyService}
+func NewPartyHandler(partyService *service.PartyService, broker *service.SSEBroker) *PartyHandler {
+	return &PartyHandler{PartyService: partyService, Broker: broker}
+}
+
+// GetParties godoc
+// @Summary      Get all parties
+// @Description  Get all parties ordered by ID
+// @Tags         parties
+// @Produce      json
+// @Success      200  {array}  service.PartyDTO
+// @Router       /parties [get]
+func (h *PartyHandler) GetParties(c *gin.Context) {
+	dtos, err := h.PartyService.GetParties()
+	if err != nil {
+		slog.Error("Failed to get parties", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	slog.Info("Successfully retrieved all parties", "count", len(dtos))
+	c.JSON(http.StatusOK, dtos)
+}
+
+// StreamParty godoc
+// @Summary      SSE stream for a party
+// @Description  Opens a Server-Sent Events stream for real-time party updates
+// @Tags         parties
+// @Produce      text/event-stream
+// @Param        code path string true "Party Code"
+// @Param        username query string true "Username of the connected client"
+// @Router       /parties/{code}/stream [get]
+func (h *PartyHandler) StreamParty(c *gin.Context) {
+	code := c.Param("code")
+	username := c.Query("username")
+	if username == "" {
+		username = fmt.Sprintf("user-%d", time.Now().UnixNano())
+	}
+	clientID := username
+
+	slog.Info("Opening SSE stream", "code", code, "username", username)
+	client := h.Broker.Register(code, clientID)
+	defer h.Broker.Unregister(code, clientID)
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	// Send initial online users list
+	onlineUsers := h.Broker.OnlineUsers(code)
+	c.SSEvent("online_users", onlineUsers)
+	c.Writer.Flush()
+
+	// Send initial party state
+	party, err := h.PartyService.GetPartyByCode(code)
+	if err == nil {
+		c.SSEvent("party_updated", party)
+		c.Writer.Flush()
+	}
+
+	slog.Info("Client connected to SSE", "code", code, "username", username)
+
+	ctx := c.Request.Context()
+	for {
+		select {
+		case msg, ok := <-client.Channel:
+			if !ok {
+				return
+			}
+			_, err := fmt.Fprint(c.Writer, msg)
+			if err != nil {
+				return
+			}
+			c.Writer.Flush()
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 // CreateParty godoc
@@ -29,15 +110,20 @@ func NewPartyHandler(partyService *service.PartyService) *PartyHandler {
 func (h *PartyHandler) CreateParty(c *gin.Context) {
 	var party models.Party
 	if err := c.ShouldBindJSON(&party); err != nil {
+		slog.Warn("Failed to bind JSON for party creation", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	slog.Info("Creating new party", "creator", party.Attendees)
+
 	created, err := h.PartyService.CreateParty(&party)
 	if err != nil {
+		slog.Error("Failed to create party", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Party created successfully", "code", created.Code)
 
 	dto, err := h.PartyService.ToDTO(created)
 	if err != nil {
@@ -58,21 +144,10 @@ func (h *PartyHandler) CreateParty(c *gin.Context) {
 // @Router       /parties/{code} [get]
 func (h *PartyHandler) GetParty(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
+	dto, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
+		slog.Warn("Party not found", "code", code)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
-		return
-	}
-
-	party, err := h.PartyService.GetParty(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
-		return
-	}
-
-	dto, err := h.PartyService.ToDTO(party)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -89,13 +164,7 @@ func (h *PartyHandler) GetParty(c *gin.Context) {
 // @Router       /parties/{code}/options [get]
 func (h *PartyHandler) GetOptions(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
-		return
-	}
-
-	party, err := h.PartyService.GetParty(id)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
@@ -115,60 +184,59 @@ type StringValue struct {
 // @Accept       json
 // @Produce      json
 // @Param        code path string true "Party Code"
-// @Param        value body StringValue true "Option Value"
-// @Success      200  {object}  StringValue
+// @Param        option body models.PartyOption true "Option Details"
+// @Success      200  {object}  models.PartyOption
 // @Router       /parties/{code}/options [post]
 func (h *PartyHandler) PostOption(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
 	}
 
-	var val StringValue
-	if err := c.ShouldBindJSON(&val); err != nil {
+	var opt models.PartyOption
+	if err := c.ShouldBindJSON(&opt); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	err = h.PartyService.AddOption(id, val.Value)
+	slog.Info("Adding option", "code", code, "option", opt)
+	err = h.PartyService.AddOption(party.ID, opt)
 	if err != nil {
+		slog.Error("Failed to add option", "code", code, "option", opt.Name, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Option added", "code", code, "option", opt.Name)
 
-	c.JSON(http.StatusOK, val)
+	c.JSON(http.StatusOK, opt)
 }
 
 // DeleteOption godoc
 // @Summary      Delete an option
-// @Description  Delete an option from a party by index
+// @Description  Delete an option from a party by its name
 // @Tags         parties
 // @Param        code path string true "Party Code"
-// @Param        optionId path int true "Option Index"
+// @Param        gameName path string true "Game Name"
 // @Success      200
-// @Router       /parties/{code}/options/{optionId} [delete]
+// @Router       /parties/{code}/options/{gameName} [delete]
 func (h *PartyHandler) DeleteOption(c *gin.Context) {
 	code := c.Param("code")
-	optionIdStr := c.Param("optionId")
-	optionId, err := strconv.Atoi(optionIdStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid option ID"})
-		return
-	}
+	gameName := c.Param("gameName")
 
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
 	}
 
-	err = h.PartyService.DeleteOption(id, optionId)
+	err = h.PartyService.DeleteOption(party.ID, gameName)
 	if err != nil {
+		slog.Error("Failed to delete option", "code", code, "option", gameName, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Option deleted", "code", code, "option", gameName)
 
 	c.Status(http.StatusOK)
 }
@@ -183,13 +251,7 @@ func (h *PartyHandler) DeleteOption(c *gin.Context) {
 // @Router       /parties/{code}/attendees [get]
 func (h *PartyHandler) GetAttendees(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
-		return
-	}
-
-	party, err := h.PartyService.GetParty(id)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
@@ -210,7 +272,7 @@ func (h *PartyHandler) GetAttendees(c *gin.Context) {
 // @Router       /parties/{code}/attendees [post]
 func (h *PartyHandler) PostAttendee(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
@@ -222,7 +284,12 @@ func (h *PartyHandler) PostAttendee(c *gin.Context) {
 		return
 	}
 
-	err = h.PartyService.AddAttendee(id, val.Value)
+	id, err := helpers.ToRecordID(party.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	err = h.PartyService.AddAttendee(*id, val.Value)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -248,17 +315,24 @@ func (h *PartyHandler) DeleteAttendee(c *gin.Context) {
 		return
 	}
 
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
 	}
 
-	err = h.PartyService.DeleteAttendee(id, attendeeId)
+	id, err := helpers.ToRecordID(party.ID)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	err = h.PartyService.DeleteAttendee(*id, attendeeId)
+	if err != nil {
+		slog.Error("Failed to delete attendee", "code", code, "attendeeId", attendeeId, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Attendee deleted", "code", code, "attendeeId", attendeeId)
 
 	c.Status(http.StatusOK)
 }
@@ -279,7 +353,7 @@ type PatchPartyRequest struct {
 // @Router       /parties/{code} [patch]
 func (h *PartyHandler) PatchParty(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
@@ -287,17 +361,24 @@ func (h *PartyHandler) PatchParty(c *gin.Context) {
 
 	var req PatchPartyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		slog.Warn("Failed to bind JSON for party patch", "code", code, "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Patching party", "code", code, "status", req.Status)
 
-	party, err := h.PartyService.PatchParty(id, models.PartyStatus(req.Status))
+	id, err := helpers.ToRecordID(party.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	partyFromDb, err := h.PartyService.PatchParty(*id, models.PartyStatus(req.Status))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	dto, err := h.PartyService.ToDTO(party)
+	dto, err := h.PartyService.ToDTO(partyFromDb)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -322,7 +403,7 @@ type BeerDTO struct {
 // @Router       /parties/{code}/beers [post]
 func (h *PartyHandler) PostBeer(c *gin.Context) {
 	code := c.Param("code")
-	id, err := h.PartyService.GetIdForCode(code)
+	party, err := h.PartyService.GetPartyByCode(code)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Party not found"})
 		return
@@ -334,11 +415,13 @@ func (h *PartyHandler) PostBeer(c *gin.Context) {
 		return
 	}
 
-	err = h.PartyService.PostBeer(id, beer.Attendee)
+	err = h.PartyService.PostBeer(party.ID, beer.Attendee)
 	if err != nil {
+		slog.Error("Failed to add beer", "code", code, "attendee", beer.Attendee, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("Beer added", "code", code, "attendee", beer.Attendee)
 
 	c.Status(http.StatusOK)
 }

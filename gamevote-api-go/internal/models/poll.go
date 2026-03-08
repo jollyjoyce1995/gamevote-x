@@ -8,8 +8,8 @@ const (
 )
 
 type Poll struct {
-	ID        string     `json:"id,omitempty" surreal:"id,omitempty"`
-	Options   []string   `json:"options" surreal:"options"`
-	Attendees []string   `json:"attendees" surreal:"attendees"`
-	Status    PollStatus `json:"status" surreal:"status"`
+	ID        string        `json:"id,omitempty" surreal:"id,omitempty"`
+	Options   []PartyOption `json:"options" surreal:"options"`
+	Attendees []string      `json:"attendees" surreal:"attendees"`
+	Status    PollStatus    `json:"status" surreal:"status"`
 }

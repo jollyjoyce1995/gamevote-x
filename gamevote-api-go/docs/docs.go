@@ -15,7 +15,115 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/drinks/presets": {
+            "get": {
+                "description": "Get a list of all preset drinks",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "drinks"
+                ],
+                "summary": "Get preset drinks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DrinkType"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new custom drink preset saving it to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "drinks"
+                ],
+                "summary": "Add custom drink preset",
+                "parameters": [
+                    {
+                        "description": "Drink Type Details",
+                        "name": "drinkType",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DrinkType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DrinkType"
+                        }
+                    }
+                }
+            }
+        },
+        "/games": {
+            "get": {
+                "description": "Search the cached Steam game list by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "games"
+                ],
+                "summary": "Search games",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search Query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Game"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/parties": {
+            "get": {
+                "description": "Get all parties ordered by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parties"
+                ],
+                "summary": "Get all parties",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.PartyDTO"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Creates a new party with a generated 6-character code",
                 "consumes": [
@@ -308,12 +416,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Option Value",
-                        "name": "value",
+                        "description": "Option Details",
+                        "name": "option",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.StringValue"
+                            "$ref": "#/definitions/models.PartyOption"
                         }
                     }
                 ],
@@ -321,15 +429,15 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.StringValue"
+                            "$ref": "#/definitions/models.PartyOption"
                         }
                     }
                 }
             }
         },
-        "/parties/{code}/options/{optionId}": {
+        "/parties/{code}/options/{gameName}": {
             "delete": {
-                "description": "Delete an option from a party by index",
+                "description": "Delete an option from a party by its name",
                 "tags": [
                     "parties"
                 ],
@@ -343,9 +451,9 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Option Index",
-                        "name": "optionId",
+                        "type": "string",
+                        "description": "Game Name",
+                        "name": "gameName",
                         "in": "path",
                         "required": true
                     }
@@ -355,6 +463,35 @@ const docTemplate = `{
                         "description": "OK"
                     }
                 }
+            }
+        },
+        "/parties/{code}/stream": {
+            "get": {
+                "description": "Opens a Server-Sent Events stream for real-time party updates",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "parties"
+                ],
+                "summary": "SSE stream for a party",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Party Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username of the connected client",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
             }
         },
         "/polls": {
@@ -632,6 +769,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users": {
+            "get": {
+                "description": "Returns a list of all registered users.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.User"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Logs in a user by username. If they do not exist, they are created.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login or Register a User",
+                "parameters": [
+                    {
+                        "description": "Login Request",
+                        "name": "req",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -659,53 +851,76 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Party": {
+        "handler.UserLoginRequest": {
+            "type": "object",
+            "required": [
+                "username"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DrinkType": {
             "type": "object",
             "properties": {
-                "attendees": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "alcoholPercent": {
+                    "description": "Percentage, e.g., 5.0 for 5%",
+                    "type": "number"
                 },
-                "code": {
-                    "type": "string"
+                "beerEquivalent": {
+                    "description": "How many beers this equates to",
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
                 },
-                "options": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "pollId": {
+                "name": {
                     "type": "string"
                 },
-                "results": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
+                "unitName": {
+                    "description": "e.g. \"Halber Liter\", \"Shot\", \"Achtel\"",
+                    "type": "string"
                 },
-                "status": {
-                    "$ref": "#/definitions/models.PartyStatus"
+                "volumeMl": {
+                    "type": "integer"
                 }
             }
         },
-        "models.PartyStatus": {
-            "type": "string",
-            "enum": [
-                "NOMINATION",
-                "VOTING",
-                "RESULTS"
-            ],
-            "x-enum-varnames": [
-                "PartyStatusNomination",
-                "PartyStatusVoting",
-                "PartyStatusResults"
-            ]
+        "models.Game": {
+            "type": "object",
+            "properties": {
+                "appId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Party": {
+            "type": "object"
+        },
+        "models.PartyOption": {
+            "type": "object",
+            "properties": {
+                "appId": {
+                    "type": "integer"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
         },
         "models.Poll": {
             "type": "object",
@@ -722,7 +937,7 @@ const docTemplate = `{
                 "options": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/models.PartyOption"
                     }
                 },
                 "status": {
@@ -740,6 +955,23 @@ const docTemplate = `{
                 "PollStatusInProgress",
                 "PollStatusCompleted"
             ]
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastLogin": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
         },
         "service.Link": {
             "type": "object",
@@ -782,7 +1014,7 @@ const docTemplate = `{
                 "options": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/models.PartyOption"
                     }
                 },
                 "results": {
