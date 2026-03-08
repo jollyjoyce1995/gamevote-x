@@ -1,28 +1,22 @@
 
-# ModelsPoll
+# HandlerUserLoginRequest
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`attendees` | Array&lt;string&gt;
-`id` | string
-`options` | [Array&lt;ModelsPartyOption&gt;](ModelsPartyOption.md)
-`status` | [ModelsPollStatus](ModelsPollStatus.md)
+`username` | string
 
 ## Example
 
 ```typescript
-import type { ModelsPoll } from ''
+import type { HandlerUserLoginRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "attendees": null,
-  "id": null,
-  "options": null,
-  "status": null,
-} satisfies ModelsPoll
+  "username": null,
+} satisfies HandlerUserLoginRequest
 
 console.log(example)
 
@@ -31,7 +25,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ModelsPoll
+const exampleParsed = JSON.parse(exampleJSON) as HandlerUserLoginRequest
 console.log(exampleParsed)
 ```
 

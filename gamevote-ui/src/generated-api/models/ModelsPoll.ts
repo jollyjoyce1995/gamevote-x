@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ModelsPartyOption } from './ModelsPartyOption';
+import {
+    ModelsPartyOptionFromJSON,
+    ModelsPartyOptionFromJSONTyped,
+    ModelsPartyOptionToJSON,
+    ModelsPartyOptionToJSONTyped,
+} from './ModelsPartyOption';
 import type { ModelsPollStatus } from './ModelsPollStatus';
 import {
     ModelsPollStatusFromJSON,
@@ -41,10 +48,10 @@ export interface ModelsPoll {
     id?: string;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<ModelsPartyOption>}
      * @memberof ModelsPoll
      */
-    options?: Array<string>;
+    options?: Array<ModelsPartyOption>;
     /**
      * 
      * @type {ModelsPollStatus}
@@ -74,7 +81,7 @@ export function ModelsPollFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         
         'attendees': json['attendees'] == null ? undefined : json['attendees'],
         'id': json['id'] == null ? undefined : json['id'],
-        'options': json['options'] == null ? undefined : json['options'],
+        'options': json['options'] == null ? undefined : ((json['options'] as Array<any>).map(ModelsPartyOptionFromJSON)),
         'status': json['status'] == null ? undefined : ModelsPollStatusFromJSON(json['status']),
     };
 }
@@ -92,7 +99,7 @@ export function ModelsPollToJSONTyped(value?: ModelsPoll | null, ignoreDiscrimin
         
         'attendees': value['attendees'],
         'id': value['id'],
-        'options': value['options'],
+        'options': value['options'] == null ? undefined : ((value['options'] as Array<any>).map(ModelsPartyOptionToJSON)),
         'status': ModelsPollStatusToJSON(value['status']),
     };
 }

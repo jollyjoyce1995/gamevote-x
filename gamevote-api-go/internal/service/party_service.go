@@ -343,3 +343,30 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		BeerPerAttendee: beerPerAttendee,
 	}, nil
 }
+
+func (dto *PartyDTO) ToDomain() (*models.Party, error) {
+	var recordID *surrealmodels.RecordID // Defaults to nil
+
+	if dto.ID != "" {
+		// Create the ID and assign the address to your pointer
+		id := surrealmodels.NewRecordID("parties", dto.ID)
+		recordID = &id
+	}
+	options := make([]models.PartyOption, len(dto.Options))
+	for i, opt := range dto.Options {
+		options[i] = models.PartyOption{
+			Name:     opt.Name,
+			AppID:    opt.AppID,
+			ImageURL: opt.ImageURL,
+		}
+	}
+
+	return &models.Party{
+		ID:        recordID,
+		Code:      dto.Code,
+		Attendees: dto.Attendees,
+		Options:   options,
+		Status:    models.PartyStatus(dto.Status),
+		Results:   dto.Results,
+	}, nil
+}

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ModelsPartyOption } from './ModelsPartyOption';
+import {
+    ModelsPartyOptionFromJSON,
+    ModelsPartyOptionFromJSONTyped,
+    ModelsPartyOptionToJSON,
+    ModelsPartyOptionToJSONTyped,
+} from './ModelsPartyOption';
 import type { ServiceLink } from './ServiceLink';
 import {
     ServiceLinkFromJSON,
@@ -65,10 +72,10 @@ export interface ServicePartyDTO {
     id?: string;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<ModelsPartyOption>}
      * @memberof ServicePartyDTO
      */
-    options?: Array<string>;
+    options?: Array<ModelsPartyOption>;
     /**
      * 
      * @type {{ [key: string]: number; }}
@@ -106,7 +113,7 @@ export function ServicePartyDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
         'beerPerAttendee': json['beerPerAttendee'] == null ? undefined : json['beerPerAttendee'],
         'code': json['code'] == null ? undefined : json['code'],
         'id': json['id'] == null ? undefined : json['id'],
-        'options': json['options'] == null ? undefined : json['options'],
+        'options': json['options'] == null ? undefined : ((json['options'] as Array<any>).map(ModelsPartyOptionFromJSON)),
         'results': json['results'] == null ? undefined : json['results'],
         'status': json['status'] == null ? undefined : json['status'],
     };
@@ -129,7 +136,7 @@ export function ServicePartyDTOToJSONTyped(value?: ServicePartyDTO | null, ignor
         'beerPerAttendee': value['beerPerAttendee'],
         'code': value['code'],
         'id': value['id'],
-        'options': value['options'],
+        'options': value['options'] == null ? undefined : ((value['options'] as Array<any>).map(ModelsPartyOptionToJSON)),
         'results': value['results'],
         'status': value['status'],
     };

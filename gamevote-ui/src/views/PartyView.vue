@@ -305,7 +305,7 @@ async function pickGame(item: Game | string) {
   try {
     const res = await partiesApi.partiesCodeOptionsPost({
       code: code.value,
-      value: { value: name }
+      option: option
     })
     // Note: The UI expects the option object to be returned or reactive update via SSE
   } catch (e) {

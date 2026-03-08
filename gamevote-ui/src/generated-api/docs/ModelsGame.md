@@ -1,20 +1,28 @@
 
-# ModelsPartyStatus
+# ModelsGame
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
+`appId` | number
+`id` | string
+`imageUrl` | string
+`name` | string
 
 ## Example
 
 ```typescript
-import type { ModelsPartyStatus } from ''
+import type { ModelsGame } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-} satisfies ModelsPartyStatus
+  "appId": null,
+  "id": null,
+  "imageUrl": null,
+  "name": null,
+} satisfies ModelsGame
 
 console.log(example)
 
@@ -23,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ModelsPartyStatus
+const exampleParsed = JSON.parse(exampleJSON) as ModelsGame
 console.log(exampleParsed)
 ```
 

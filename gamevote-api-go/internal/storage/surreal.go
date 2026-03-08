@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 
 	"log/slog"
 
@@ -66,7 +67,10 @@ func InitDB() error {
 	}
 
 	for _, r := range repos {
-		if err := r.InitTable(); err != nil {
+		err := r.InitTable()
+		t := reflect.TypeOf(r)
+		slog.Info("Initializing table ", "r", t)
+		if err != nil {
 			return fmt.Errorf("failed to initialize table: %w", err)
 		}
 	}

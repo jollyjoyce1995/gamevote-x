@@ -53,12 +53,10 @@ func (r *GameRepository) Search(query string, limit int) ([]models.Game, error) 
 func (r *GameRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.games) == NONE {
-			DEFINE TABLE games SCHEMAFULL;
-			DEFINE FIELD appId ON TABLE games TYPE int;
-			DEFINE FIELD name ON TABLE games TYPE string;
-			DEFINE FIELD imageUrl ON TABLE games TYPE option<string>;
-		};
+		DEFINE TABLE IF NOT EXISTS games SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS appId ON TABLE games TYPE int;
+		DEFINE FIELD IF NOT EXISTS name ON TABLE games TYPE string;
+		DEFINE FIELD IF NOT EXISTS imageUrl ON TABLE games TYPE option<string>;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

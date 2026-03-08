@@ -40,12 +40,10 @@ func (r *VoteRepository) FindByPollID(pollID string) ([]models.Vote, error) {
 func (r *VoteRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.votes) == NONE {
-			DEFINE TABLE votes SCHEMAFULL;
-			DEFINE FIELD pollId ON TABLE votes TYPE string;
-			DEFINE FIELD attendee ON TABLE votes TYPE string;
-			DEFINE FIELD choices ON TABLE votes TYPE object;
-		};
+		DEFINE TABLE IF NOT EXISTS votes SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS pollId ON TABLE votes TYPE string;
+		DEFINE FIELD IF NOT EXISTS attendee ON TABLE votes TYPE string;
+		DEFINE FIELD IF NOT EXISTS choices ON TABLE votes TYPE object;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

@@ -1,28 +1,32 @@
 
-# ModelsPoll
+# ModelsDrinkType
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`attendees` | Array&lt;string&gt;
+`alcoholPercent` | number
+`beerEquivalent` | number
 `id` | string
-`options` | [Array&lt;ModelsPartyOption&gt;](ModelsPartyOption.md)
-`status` | [ModelsPollStatus](ModelsPollStatus.md)
+`name` | string
+`unitName` | string
+`volumeMl` | number
 
 ## Example
 
 ```typescript
-import type { ModelsPoll } from ''
+import type { ModelsDrinkType } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "attendees": null,
+  "alcoholPercent": null,
+  "beerEquivalent": null,
   "id": null,
-  "options": null,
-  "status": null,
-} satisfies ModelsPoll
+  "name": null,
+  "unitName": null,
+  "volumeMl": null,
+} satisfies ModelsDrinkType
 
 console.log(example)
 
@@ -31,7 +35,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ModelsPoll
+const exampleParsed = JSON.parse(exampleJSON) as ModelsDrinkType
 console.log(exampleParsed)
 ```
 

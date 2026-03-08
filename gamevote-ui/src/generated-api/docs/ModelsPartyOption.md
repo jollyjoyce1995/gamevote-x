@@ -1,34 +1,26 @@
 
-# ModelsParty
+# ModelsPartyOption
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`attendees` | Array&lt;string&gt;
-`code` | string
-`id` | string
-`options` | Array&lt;string&gt;
-`pollId` | string
-`results` | { [key: string]: number; }
-`status` | [ModelsPartyStatus](ModelsPartyStatus.md)
+`appId` | number
+`imageUrl` | string
+`name` | string
 
 ## Example
 
 ```typescript
-import type { ModelsParty } from ''
+import type { ModelsPartyOption } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "attendees": null,
-  "code": null,
-  "id": null,
-  "options": null,
-  "pollId": null,
-  "results": null,
-  "status": null,
-} satisfies ModelsParty
+  "appId": null,
+  "imageUrl": null,
+  "name": null,
+} satisfies ModelsPartyOption
 
 console.log(example)
 
@@ -37,7 +29,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ModelsParty
+const exampleParsed = JSON.parse(exampleJSON) as ModelsPartyOption
 console.log(exampleParsed)
 ```
 

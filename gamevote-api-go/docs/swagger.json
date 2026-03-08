@@ -137,7 +137,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Party"
+                            "$ref": "#/definitions/service.PartyDTO"
                         }
                     }
                 ],
@@ -485,7 +485,14 @@
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/polls": {
@@ -898,9 +905,6 @@
                     "type": "string"
                 }
             }
-        },
-        "models.Party": {
-            "type": "object"
         },
         "models.PartyOption": {
             "type": "object",

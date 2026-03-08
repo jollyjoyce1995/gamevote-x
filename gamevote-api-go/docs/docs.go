@@ -143,7 +143,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Party"
+                            "$ref": "#/definitions/service.PartyDTO"
                         }
                     }
                 ],
@@ -491,7 +491,14 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/polls": {
@@ -904,9 +911,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "models.Party": {
-            "type": "object"
         },
         "models.PartyOption": {
             "type": "object",

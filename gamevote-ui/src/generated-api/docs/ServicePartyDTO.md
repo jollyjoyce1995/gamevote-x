@@ -12,7 +12,7 @@ Name | Type
 `beerPerAttendee` | { [key: string]: number; }
 `code` | string
 `id` | string
-`options` | Array&lt;string&gt;
+`options` | [Array&lt;ModelsPartyOption&gt;](ModelsPartyOption.md)
 `results` | { [key: string]: number; }
 `status` | string
 

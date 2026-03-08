@@ -40,11 +40,9 @@ func (r *BeerRepository) FindByPartyID(partyID string) ([]models.Beer, error) {
 func (r *BeerRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.beers) == NONE {
-			DEFINE TABLE beers SCHEMAFULL;
-			DEFINE FIELD partyId ON TABLE beers TYPE string;
-			DEFINE FIELD attendee ON TABLE beers TYPE string;
-		};
+		DEFINE TABLE IF NOT EXISTS beers SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS partyId ON TABLE beers TYPE string;
+		DEFINE FIELD IF NOT EXISTS attendee ON TABLE beers TYPE string;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

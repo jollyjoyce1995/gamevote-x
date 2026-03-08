@@ -9,10 +9,12 @@ All URIs are relative to *http://localhost:8080*
 | [**partiesCodeAttendeesPost**](PartiesApi.md#partiescodeattendeespost) | **POST** /parties/{code}/attendees | Add an attendee |
 | [**partiesCodeBeersPost**](PartiesApi.md#partiescodebeerspost) | **POST** /parties/{code}/beers | Add a beer |
 | [**partiesCodeGet**](PartiesApi.md#partiescodeget) | **GET** /parties/{code} | Get a party |
+| [**partiesCodeOptionsGameNameDelete**](PartiesApi.md#partiescodeoptionsgamenamedelete) | **DELETE** /parties/{code}/options/{gameName} | Delete an option |
 | [**partiesCodeOptionsGet**](PartiesApi.md#partiescodeoptionsget) | **GET** /parties/{code}/options | Get party options |
-| [**partiesCodeOptionsOptionIdDelete**](PartiesApi.md#partiescodeoptionsoptioniddelete) | **DELETE** /parties/{code}/options/{optionId} | Delete an option |
 | [**partiesCodeOptionsPost**](PartiesApi.md#partiescodeoptionspost) | **POST** /parties/{code}/options | Add an option |
 | [**partiesCodePatch**](PartiesApi.md#partiescodepatch) | **PATCH** /parties/{code} | Patch a party |
+| [**partiesCodeStreamGet**](PartiesApi.md#partiescodestreamget) | **GET** /parties/{code}/stream | SSE stream for a party |
+| [**partiesGet**](PartiesApi.md#partiesget) | **GET** /parties | Get all parties |
 | [**partiesPost**](PartiesApi.md#partiespost) | **POST** /parties | Create a new party |
 
 
@@ -361,6 +363,76 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## partiesCodeOptionsGameNameDelete
+
+> partiesCodeOptionsGameNameDelete(code, gameName)
+
+Delete an option
+
+Delete an option from a party by its name
+
+### Example
+
+```ts
+import {
+  Configuration,
+  PartiesApi,
+} from '';
+import type { PartiesCodeOptionsGameNameDeleteRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new PartiesApi();
+
+  const body = {
+    // string | Party Code
+    code: code_example,
+    // string | Game Name
+    gameName: gameName_example,
+  } satisfies PartiesCodeOptionsGameNameDeleteRequest;
+
+  try {
+    const data = await api.partiesCodeOptionsGameNameDelete(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **code** | `string` | Party Code | [Defaults to `undefined`] |
+| **gameName** | `string` | Game Name | [Defaults to `undefined`] |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## partiesCodeOptionsGet
 
 > Array&lt;string&gt; partiesCodeOptionsGet(code)
@@ -428,79 +500,9 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## partiesCodeOptionsOptionIdDelete
-
-> partiesCodeOptionsOptionIdDelete(code, optionId)
-
-Delete an option
-
-Delete an option from a party by index
-
-### Example
-
-```ts
-import {
-  Configuration,
-  PartiesApi,
-} from '';
-import type { PartiesCodeOptionsOptionIdDeleteRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new PartiesApi();
-
-  const body = {
-    // string | Party Code
-    code: code_example,
-    // number | Option Index
-    optionId: 56,
-  } satisfies PartiesCodeOptionsOptionIdDeleteRequest;
-
-  try {
-    const data = await api.partiesCodeOptionsOptionIdDelete(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **code** | `string` | Party Code | [Defaults to `undefined`] |
-| **optionId** | `number` | Option Index | [Defaults to `undefined`] |
-
-### Return type
-
-`void` (Empty response body)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
 ## partiesCodeOptionsPost
 
-> HandlerStringValue partiesCodeOptionsPost(code, value)
+> ModelsPartyOption partiesCodeOptionsPost(code, option)
 
 Add an option
 
@@ -522,8 +524,8 @@ async function example() {
   const body = {
     // string | Party Code
     code: code_example,
-    // HandlerStringValue | Option Value
-    value: ...,
+    // ModelsPartyOption | Option Details
+    option: ...,
   } satisfies PartiesCodeOptionsPostRequest;
 
   try {
@@ -544,11 +546,11 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **code** | `string` | Party Code | [Defaults to `undefined`] |
-| **value** | [HandlerStringValue](HandlerStringValue.md) | Option Value | |
+| **option** | [ModelsPartyOption](ModelsPartyOption.md) | Option Details | |
 
 ### Return type
 
-[**HandlerStringValue**](HandlerStringValue.md)
+[**ModelsPartyOption**](ModelsPartyOption.md)
 
 ### Authorization
 
@@ -638,6 +640,135 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## partiesCodeStreamGet
+
+> string partiesCodeStreamGet(code, username)
+
+SSE stream for a party
+
+Opens a Server-Sent Events stream for real-time party updates
+
+### Example
+
+```ts
+import {
+  Configuration,
+  PartiesApi,
+} from '';
+import type { PartiesCodeStreamGetRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new PartiesApi();
+
+  const body = {
+    // string | Party Code
+    code: code_example,
+    // string | Username of the connected client
+    username: username_example,
+  } satisfies PartiesCodeStreamGetRequest;
+
+  try {
+    const data = await api.partiesCodeStreamGet(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **code** | `string` | Party Code | [Defaults to `undefined`] |
+| **username** | `string` | Username of the connected client | [Defaults to `undefined`] |
+
+### Return type
+
+**string**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `text/event-stream`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## partiesGet
+
+> Array&lt;ServicePartyDTO&gt; partiesGet()
+
+Get all parties
+
+Get all parties ordered by ID
+
+### Example
+
+```ts
+import {
+  Configuration,
+  PartiesApi,
+} from '';
+import type { PartiesGetRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new PartiesApi();
+
+  try {
+    const data = await api.partiesGet();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**Array&lt;ServicePartyDTO&gt;**](ServicePartyDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## partiesPost
 
 > ServicePartyDTO partiesPost(party)
@@ -660,7 +791,7 @@ async function example() {
   const api = new PartiesApi();
 
   const body = {
-    // ModelsParty | Party details
+    // ServicePartyDTO | Party details
     party: ...,
   } satisfies PartiesPostRequest;
 
@@ -681,7 +812,7 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **party** | [ModelsParty](ModelsParty.md) | Party details | |
+| **party** | [ServicePartyDTO](ServicePartyDTO.md) | Party details | |
 
 ### Return type
 

@@ -31,6 +31,7 @@ func NewSteamWorker(gameRepo *storage.GameRepository) *SteamWorker {
 func (w *SteamWorker) Start() {
 	go func() {
 		// Run once on startup if the DB is empty
+		w.GameRepo.InitTable()
 		count, err := w.GameRepo.Count()
 		if err != nil || count == 0 {
 			slog.Info("Steam Worker: fetching initial game list...")

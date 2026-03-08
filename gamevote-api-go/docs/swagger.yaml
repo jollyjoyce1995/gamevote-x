@@ -51,8 +51,6 @@ definitions:
       name:
         type: string
     type: object
-  models.Party:
-    type: object
   models.PartyOption:
     properties:
       appId:
@@ -221,7 +219,7 @@ paths:
         name: party
         required: true
         schema:
-          $ref: '#/definitions/models.Party'
+          $ref: '#/definitions/service.PartyDTO'
       produces:
       - application/json
       responses:
@@ -452,7 +450,11 @@ paths:
         type: string
       produces:
       - text/event-stream
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
       summary: SSE stream for a party
       tags:
       - parties

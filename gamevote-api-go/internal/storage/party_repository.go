@@ -17,11 +17,14 @@ type PartyRepository struct{}
 
 func (r *PartyRepository) Save(party *models.Party) error {
 	ctx := context.Background()
+	slog.Info("Before updating party in DB", "id", party)
+
 	if party.ID == nil {
 		slog.Debug("Creating new party in DB", "code", party.Code)
 		res, err := surrealdb.Create[models.Party](ctx, DB, "parties", party)
 		if err == nil && res != nil {
 			party.ID = res.ID
+			return nil
 		}
 		return err
 	}
@@ -89,15 +92,13 @@ func (r *PartyRepository) ExistsByCode(code string) bool {
 func (r *PartyRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.parties) == NONE {
-			DEFINE TABLE parties SCHEMAFULL;
-			DEFINE FIELD code ON TABLE parties TYPE string;
-			DEFINE FIELD attendees ON TABLE parties TYPE array<string>;
-			DEFINE FIELD options ON TABLE parties TYPE array<object>;
-			DEFINE FIELD status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
-			DEFINE FIELD results ON TABLE parties TYPE option<object>;
-			DEFINE FIELD pollId ON TABLE parties TYPE option<string>;
-		};
+		DEFINE TABLE IF NOT EXISTS parties SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS code ON TABLE parties TYPE string;
+		DEFINE FIELD IF NOT EXISTS attendees ON TABLE parties TYPE array<string>;
+		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: int, imageUrl: string}>;
+		DEFINE FIELD IF NOT EXISTS status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
+		DEFINE FIELD IF NOT EXISTS results ON TABLE parties TYPE option<object>;
+		DEFINE FIELD IF NOT EXISTS pollId ON TABLE parties TYPE option<string>;
 	`
 	slog.Debug("Initializing parties table")
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)

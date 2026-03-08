@@ -41,14 +41,12 @@ func (r *DrinkTypeRepository) FindAll() ([]models.DrinkType, error) {
 func (r *DrinkTypeRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.drink_types) == NONE {
-			DEFINE TABLE drink_types SCHEMAFULL;
-			DEFINE FIELD name ON TABLE drink_types TYPE string;
-			DEFINE FIELD volumeMl ON TABLE drink_types TYPE int;
-			DEFINE FIELD alcoholPercent ON TABLE drink_types TYPE float;
-			DEFINE FIELD beerEquivalent ON TABLE drink_types TYPE float;
-			DEFINE FIELD unitName ON TABLE drink_types TYPE string;
-		};
+		DEFINE TABLE IF NOT EXISTS drink_types SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS name ON TABLE drink_types TYPE string;
+		DEFINE FIELD IF NOT EXISTS volumeMl ON TABLE drink_types TYPE int;
+		DEFINE FIELD IF NOT EXISTS alcoholPercent ON TABLE drink_types TYPE float;
+		DEFINE FIELD IF NOT EXISTS beerEquivalent ON TABLE drink_types TYPE float;
+		DEFINE FIELD IF NOT EXISTS unitName ON TABLE drink_types TYPE string;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

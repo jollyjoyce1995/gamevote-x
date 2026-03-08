@@ -77,12 +77,10 @@ func (r *UserRepository) FindAll() ([]models.User, error) {
 func (r *UserRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.users) == NONE {
-			DEFINE TABLE users SCHEMAFULL;
-			DEFINE FIELD username ON TABLE users TYPE string;
-			DEFINE FIELD createdAt ON TABLE users TYPE datetime;
-			DEFINE FIELD lastLogin ON TABLE users TYPE datetime;
-		};
+		DEFINE TABLE IF NOT EXISTS users SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS username ON TABLE users TYPE string;
+		DEFINE FIELD IF NOT EXISTS createdAt ON TABLE users TYPE datetime;
+		DEFINE FIELD IF NOT EXISTS lastLogin ON TABLE users TYPE datetime;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

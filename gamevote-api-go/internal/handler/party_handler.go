@@ -48,6 +48,7 @@ func (h *PartyHandler) GetParties(c *gin.Context) {
 // @Produce      text/event-stream
 // @Param        code path string true "Party Code"
 // @Param        username query string true "Username of the connected client"
+// @Success 	 200 {object} string
 // @Router       /parties/{code}/stream [get]
 func (h *PartyHandler) StreamParty(c *gin.Context) {
 	code := c.Param("code")
@@ -104,11 +105,11 @@ func (h *PartyHandler) StreamParty(c *gin.Context) {
 // @Tags         parties
 // @Accept       json
 // @Produce      json
-// @Param        party body models.Party true "Party details"
+// @Param        party body service.PartyDTO true "Party details"
 // @Success      200  {object}  service.PartyDTO
 // @Router       /parties [post]
 func (h *PartyHandler) CreateParty(c *gin.Context) {
-	var party models.Party
+	var party service.PartyDTO
 	if err := c.ShouldBindJSON(&party); err != nil {
 		slog.Warn("Failed to bind JSON for party creation", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -116,8 +117,13 @@ func (h *PartyHandler) CreateParty(c *gin.Context) {
 	}
 
 	slog.Info("Creating new party", "creator", party.Attendees)
-
-	created, err := h.PartyService.CreateParty(&party)
+	partyDomain, err := party.ToDomain()
+	if err != nil {
+		slog.Error("Failed to convert party to domain", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	created, err := h.PartyService.CreateParty(partyDomain)
 	if err != nil {
 		slog.Error("Failed to create party", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -18,7 +18,7 @@ import type {
   HandlerBeerDTO,
   HandlerPatchPartyRequest,
   HandlerStringValue,
-  ModelsParty,
+  ModelsPartyOption,
   ServicePartyDTO,
 } from '../models/index';
 import {
@@ -28,8 +28,8 @@ import {
     HandlerPatchPartyRequestToJSON,
     HandlerStringValueFromJSON,
     HandlerStringValueToJSON,
-    ModelsPartyFromJSON,
-    ModelsPartyToJSON,
+    ModelsPartyOptionFromJSON,
+    ModelsPartyOptionToJSON,
     ServicePartyDTOFromJSON,
     ServicePartyDTOToJSON,
 } from '../models/index';
@@ -57,18 +57,18 @@ export interface PartiesCodeGetRequest {
     code: string;
 }
 
+export interface PartiesCodeOptionsGameNameDeleteRequest {
+    code: string;
+    gameName: string;
+}
+
 export interface PartiesCodeOptionsGetRequest {
     code: string;
 }
 
-export interface PartiesCodeOptionsOptionIdDeleteRequest {
-    code: string;
-    optionId: number;
-}
-
 export interface PartiesCodeOptionsPostRequest {
     code: string;
-    value: HandlerStringValue;
+    option: ModelsPartyOption;
 }
 
 export interface PartiesCodePatchRequest {
@@ -76,8 +76,13 @@ export interface PartiesCodePatchRequest {
     patchReq: HandlerPatchPartyRequest;
 }
 
+export interface PartiesCodeStreamGetRequest {
+    code: string;
+    username: string;
+}
+
 export interface PartiesPostRequest {
-    party: ModelsParty;
+    party: ServicePartyDTO;
 }
 
 /**
@@ -347,6 +352,60 @@ export class PartiesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for partiesCodeOptionsGameNameDelete without sending the request
+     */
+    async partiesCodeOptionsGameNameDeleteRequestOpts(requestParameters: PartiesCodeOptionsGameNameDeleteRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['code'] == null) {
+            throw new runtime.RequiredError(
+                'code',
+                'Required parameter "code" was null or undefined when calling partiesCodeOptionsGameNameDelete().'
+            );
+        }
+
+        if (requestParameters['gameName'] == null) {
+            throw new runtime.RequiredError(
+                'gameName',
+                'Required parameter "gameName" was null or undefined when calling partiesCodeOptionsGameNameDelete().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/parties/{code}/options/{gameName}`;
+        urlPath = urlPath.replace(`{${"code"}}`, encodeURIComponent(String(requestParameters['code'])));
+        urlPath = urlPath.replace(`{${"gameName"}}`, encodeURIComponent(String(requestParameters['gameName'])));
+
+        return {
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Delete an option from a party by its name
+     * Delete an option
+     */
+    async partiesCodeOptionsGameNameDeleteRaw(requestParameters: PartiesCodeOptionsGameNameDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.partiesCodeOptionsGameNameDeleteRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Delete an option from a party by its name
+     * Delete an option
+     */
+    async partiesCodeOptionsGameNameDelete(requestParameters: PartiesCodeOptionsGameNameDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.partiesCodeOptionsGameNameDeleteRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * Creates request options for partiesCodeOptionsGet without sending the request
      */
     async partiesCodeOptionsGetRequestOpts(requestParameters: PartiesCodeOptionsGetRequest): Promise<runtime.RequestOpts> {
@@ -394,60 +453,6 @@ export class PartiesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates request options for partiesCodeOptionsOptionIdDelete without sending the request
-     */
-    async partiesCodeOptionsOptionIdDeleteRequestOpts(requestParameters: PartiesCodeOptionsOptionIdDeleteRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['code'] == null) {
-            throw new runtime.RequiredError(
-                'code',
-                'Required parameter "code" was null or undefined when calling partiesCodeOptionsOptionIdDelete().'
-            );
-        }
-
-        if (requestParameters['optionId'] == null) {
-            throw new runtime.RequiredError(
-                'optionId',
-                'Required parameter "optionId" was null or undefined when calling partiesCodeOptionsOptionIdDelete().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/parties/{code}/options/{optionId}`;
-        urlPath = urlPath.replace(`{${"code"}}`, encodeURIComponent(String(requestParameters['code'])));
-        urlPath = urlPath.replace(`{${"optionId"}}`, encodeURIComponent(String(requestParameters['optionId'])));
-
-        return {
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Delete an option from a party by index
-     * Delete an option
-     */
-    async partiesCodeOptionsOptionIdDeleteRaw(requestParameters: PartiesCodeOptionsOptionIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.partiesCodeOptionsOptionIdDeleteRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Delete an option from a party by index
-     * Delete an option
-     */
-    async partiesCodeOptionsOptionIdDelete(requestParameters: PartiesCodeOptionsOptionIdDeleteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.partiesCodeOptionsOptionIdDeleteRaw(requestParameters, initOverrides);
-    }
-
-    /**
      * Creates request options for partiesCodeOptionsPost without sending the request
      */
     async partiesCodeOptionsPostRequestOpts(requestParameters: PartiesCodeOptionsPostRequest): Promise<runtime.RequestOpts> {
@@ -458,10 +463,10 @@ export class PartiesApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['value'] == null) {
+        if (requestParameters['option'] == null) {
             throw new runtime.RequiredError(
-                'value',
-                'Required parameter "value" was null or undefined when calling partiesCodeOptionsPost().'
+                'option',
+                'Required parameter "option" was null or undefined when calling partiesCodeOptionsPost().'
             );
         }
 
@@ -480,7 +485,7 @@ export class PartiesApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: HandlerStringValueToJSON(requestParameters['value']),
+            body: ModelsPartyOptionToJSON(requestParameters['option']),
         };
     }
 
@@ -488,18 +493,18 @@ export class PartiesApi extends runtime.BaseAPI {
      * Add an option to a party
      * Add an option
      */
-    async partiesCodeOptionsPostRaw(requestParameters: PartiesCodeOptionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HandlerStringValue>> {
+    async partiesCodeOptionsPostRaw(requestParameters: PartiesCodeOptionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelsPartyOption>> {
         const requestOptions = await this.partiesCodeOptionsPostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => HandlerStringValueFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ModelsPartyOptionFromJSON(jsonValue));
     }
 
     /**
      * Add an option to a party
      * Add an option
      */
-    async partiesCodeOptionsPost(requestParameters: PartiesCodeOptionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HandlerStringValue> {
+    async partiesCodeOptionsPost(requestParameters: PartiesCodeOptionsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelsPartyOption> {
         const response = await this.partiesCodeOptionsPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -562,6 +567,107 @@ export class PartiesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for partiesCodeStreamGet without sending the request
+     */
+    async partiesCodeStreamGetRequestOpts(requestParameters: PartiesCodeStreamGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['code'] == null) {
+            throw new runtime.RequiredError(
+                'code',
+                'Required parameter "code" was null or undefined when calling partiesCodeStreamGet().'
+            );
+        }
+
+        if (requestParameters['username'] == null) {
+            throw new runtime.RequiredError(
+                'username',
+                'Required parameter "username" was null or undefined when calling partiesCodeStreamGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['username'] != null) {
+            queryParameters['username'] = requestParameters['username'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/parties/{code}/stream`;
+        urlPath = urlPath.replace(`{${"code"}}`, encodeURIComponent(String(requestParameters['code'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Opens a Server-Sent Events stream for real-time party updates
+     * SSE stream for a party
+     */
+    async partiesCodeStreamGetRaw(requestParameters: PartiesCodeStreamGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        const requestOptions = await this.partiesCodeStreamGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Opens a Server-Sent Events stream for real-time party updates
+     * SSE stream for a party
+     */
+    async partiesCodeStreamGet(requestParameters: PartiesCodeStreamGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.partiesCodeStreamGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for partiesGet without sending the request
+     */
+    async partiesGetRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/parties`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Get all parties ordered by ID
+     * Get all parties
+     */
+    async partiesGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServicePartyDTO>>> {
+        const requestOptions = await this.partiesGetRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServicePartyDTOFromJSON));
+    }
+
+    /**
+     * Get all parties ordered by ID
+     * Get all parties
+     */
+    async partiesGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServicePartyDTO>> {
+        const response = await this.partiesGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Creates request options for partiesPost without sending the request
      */
     async partiesPostRequestOpts(requestParameters: PartiesPostRequest): Promise<runtime.RequestOpts> {
@@ -586,7 +692,7 @@ export class PartiesApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ModelsPartyToJSON(requestParameters['party']),
+            body: ServicePartyDTOToJSON(requestParameters['party']),
         };
     }
 

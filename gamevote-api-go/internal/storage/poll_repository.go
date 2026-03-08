@@ -56,12 +56,10 @@ func (r *PollRepository) FindByID(id string) (*models.Poll, error) {
 func (r *PollRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
-		IF (SELECT VALUE id FROM (INFO FOR DB).tables.polls) == NONE {
-			DEFINE TABLE polls SCHEMAFULL;
-			DEFINE FIELD options ON TABLE polls TYPE array<object>;
-			DEFINE FIELD attendees ON TABLE polls TYPE array<string>;
-			DEFINE FIELD status ON TABLE polls TYPE string ASSERT $value INSIDE ['IN_PROGRESS', 'COMPLETED'];
-		};
+		DEFINE TABLE IF NOT EXISTS polls SCHEMAFULL;
+		DEFINE FIELD IF NOT EXISTS options ON TABLE polls TYPE array<object>;
+		DEFINE FIELD IF NOT EXISTS attendees ON TABLE polls TYPE array<string>;
+		DEFINE FIELD IF NOT EXISTS status ON TABLE polls TYPE string ASSERT $value INSIDE ['IN_PROGRESS', 'COMPLETED'];
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err
