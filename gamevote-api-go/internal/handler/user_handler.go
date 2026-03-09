@@ -25,8 +25,8 @@ type UserLoginRequest struct {
 // @Summary      Login or Register a User
 // @Description  Logs in a user by username. If they do not exist, they are created.
 // @Tags         users
-// @Accept       json
-// @Produce      json
+// @Accept       application/json
+// @Produce      application/json
 // @Param        req body UserLoginRequest true "Login Request"
 // @Success      200  {object}  models.User
 // @Router       /users [post]
@@ -52,7 +52,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Summary      Get all users
 // @Description  Returns a list of all registered users.
 // @Tags         users
-// @Produce      json
+// @Produce      application/json
 // @Success      200  {array}   models.User
 // @Router       /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {

@@ -276,26 +276,6 @@ paths:
       tags:
       - parties
   /parties/{code}/attendees:
-    get:
-      description: Get attendees for a specific party
-      parameters:
-      - description: Party Code
-        in: path
-        name: code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-      summary: Get party attendees
-      tags:
-      - parties
     post:
       consumes:
       - application/json
@@ -368,26 +348,6 @@ paths:
       tags:
       - parties
   /parties/{code}/options:
-    get:
-      description: Get options for a specific party
-      parameters:
-      - description: Party Code
-        in: path
-        name: code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-      summary: Get party options
-      tags:
-      - parties
     post:
       consumes:
       - application/json

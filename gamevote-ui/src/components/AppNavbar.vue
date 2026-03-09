@@ -1,12 +1,12 @@
 <template>
-  <nav class="glass sticky top-0 z-50 px-6 py-5 flex items-center justify-between gap-4">
+  <nav class="glass sticky top-0 z-50 px-6 py-8 flex items-center justify-between gap-4">
     <!-- Left: Logo + Party code -->
     <div class="flex items-center gap-4">
-      <RouterLink to="/" class="text-xl font-extrabold grad-text tracking-tight">🎲 GameVote</RouterLink>
+      <RouterLink to="/" class="text-3xl font-extrabold grad-text tracking-tight">🎲 GameVote</RouterLink>
       <template v-if="partyCode">
-        <span class="text-muted text-sm">›</span>
-        <span class="text-sm font-semibold text-indigo-300">{{ partyCode }}</span>
-        <RouterLink :to="`/parties/${partyCode}/drinks`" class="btn btn-ghost btn-sm ml-2">🍺 Drinks</RouterLink>
+        <span class="text-muted text-lg">›</span>
+        <span class="text-lg font-semibold text-indigo-300">{{ partyCode }}</span>
+        <RouterLink :to="`/parties/${partyCode}/drinks`" class="btn btn-ghost ml-2">🍺 Drinks</RouterLink>
       </template>
     </div>
 
@@ -24,8 +24,8 @@
 
     <!-- Right: Username + logout -->
     <div class="flex items-center gap-3">
-      <span class="text-sm text-muted">👤 <strong class="text-text">{{ authStore.username }}</strong></span>
-      <button class="btn btn-ghost btn-sm" @click="handleLogout">Logout</button>
+      <span class="text-base text-muted">👤 <strong class="text-text">{{ authStore.username }}</strong></span>
+      <button class="btn btn-ghost" @click="handleLogout">Logout</button>
     </div>
   </nav>
 </template>

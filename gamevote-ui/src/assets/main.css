@@ -43,7 +43,7 @@ html, body {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: 1rem;
-  padding: 1.5rem;
+  padding: 2rem;
   transition: border-color .2s, box-shadow .2s;
 }
 .card:hover { border-color: var(--c-accent); box-shadow: 0 0 20px rgba(99,102,241,.12); }
@@ -54,8 +54,8 @@ html, body {
   gap: .5rem;
   border: none;
   border-radius: .75rem;
-  padding: .6rem 1.25rem;
-  font-size: .875rem;
+  padding: .75rem 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all .2s;

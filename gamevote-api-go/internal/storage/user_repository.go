@@ -43,6 +43,7 @@ func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
 func (r *UserRepository) Upsert(username string) (*models.User, error) {
 	slog.Debug("Upserting user", "username", username)
 	user, err := r.FindByUsername(username)
+	slog.Info("User found", "user", user)
 	now := time.Now()
 
 	if err != nil {

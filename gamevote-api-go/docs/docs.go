@@ -226,36 +226,6 @@ const docTemplate = `{
             }
         },
         "/parties/{code}/attendees": {
-            "get": {
-                "description": "Get attendees for a specific party",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "parties"
-                ],
-                "summary": "Get party attendees",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Party Code",
-                        "name": "code",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "Add an attendee to a party",
                 "consumes": [
@@ -365,36 +335,6 @@ const docTemplate = `{
             }
         },
         "/parties/{code}/options": {
-            "get": {
-                "description": "Get options for a specific party",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "parties"
-                ],
-                "summary": "Get party options",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Party Code",
-                        "name": "code",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "Add an option to a party",
                 "consumes": [

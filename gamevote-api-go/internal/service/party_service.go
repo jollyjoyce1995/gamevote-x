@@ -63,10 +63,6 @@ func (s *PartyService) CreateParty(party *models.Party) (*models.Party, error) {
 	return party, err
 }
 
-func (s *PartyService) GetParty(id string) (*models.Party, error) {
-	return s.PartyRepo.FindByID(id)
-}
-
 func (s *PartyService) GetParties() ([]*PartyDTO, error) {
 	parties, err := s.PartyRepo.FindAll()
 	if err != nil {
@@ -113,8 +109,8 @@ func (s *PartyService) AllowedTransitions(id surrealmodels.RecordID) (map[models
 	return transitions, nil
 }
 
-func (s *PartyService) PatchParty(id surrealmodels.RecordID, toStatus models.PartyStatus) (*models.Party, error) {
-	party, err := s.PartyRepo.FindBySurrealID(id)
+func (s *PartyService) PatchParty(code string, toStatus models.PartyStatus) (*models.Party, error) {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +120,7 @@ func (s *PartyService) PatchParty(id surrealmodels.RecordID, toStatus models.Par
 		return party, nil
 	}
 
-	transitions, err := s.AllowedTransitions(id)
+	transitions, err := s.AllowedTransitions(*party.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +176,8 @@ func (s *PartyService) PatchParty(id surrealmodels.RecordID, toStatus models.Par
 	return party, nil
 }
 
-func (s *PartyService) AddOption(id string, option models.PartyOption) error {
-	party, err := s.PartyRepo.FindByID(id)
+func (s *PartyService) AddOption(code string, option models.PartyOption) error {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
@@ -206,8 +202,8 @@ func (s *PartyService) AddOption(id string, option models.PartyOption) error {
 	return nil
 }
 
-func (s *PartyService) AddAttendee(id surrealmodels.RecordID, value string) error {
-	party, err := s.PartyRepo.FindBySurrealID(id)
+func (s *PartyService) AddAttendee(code string, value string) error {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
@@ -220,7 +216,10 @@ func (s *PartyService) AddAttendee(id surrealmodels.RecordID, value string) erro
 
 	party.Attendees = append(party.Attendees, value)
 	if party.PollID != "" {
-		s.PollService.AddAttendee(party.PollID, value)
+		err = s.PollService.AddAttendee(party.Code, value)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := s.PartyRepo.Save(party); err != nil {
@@ -234,8 +233,8 @@ func (s *PartyService) AddAttendee(id surrealmodels.RecordID, value string) erro
 	return nil
 }
 
-func (s *PartyService) DeleteAttendee(id surrealmodels.RecordID, index int) error {
-	party, err := s.PartyRepo.FindBySurrealID(id)
+func (s *PartyService) DeleteAttendee(code string, index int) error {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
@@ -247,8 +246,8 @@ func (s *PartyService) DeleteAttendee(id surrealmodels.RecordID, index int) erro
 	return errors.New("not found: index out of bounds")
 }
 
-func (s *PartyService) DeleteOption(id string, name string) error {
-	party, err := s.PartyRepo.FindByID(id)
+func (s *PartyService) DeleteOption(code string, name string) error {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
@@ -277,8 +276,8 @@ func (s *PartyService) DeleteOption(id string, name string) error {
 	return nil
 }
 
-func (s *PartyService) PostBeer(id string, attendee string) error {
-	party, err := s.PartyRepo.FindByID(id)
+func (s *PartyService) PostBeer(code string, attendee string) error {
+	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
 		return err
 	}
@@ -344,7 +343,7 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 	}, nil
 }
 
-func (dto *PartyDTO) ToDomain() (*models.Party, error) {
+func (s *PartyService) ToDomain(dto *PartyDTO) (*models.Party, error) {
 	var recordID *surrealmodels.RecordID // Defaults to nil
 
 	if dto.ID != "" {

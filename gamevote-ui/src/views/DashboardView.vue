@@ -29,28 +29,11 @@
 
     <!-- Party list -->
     <TransitionGroup name="list" tag="div" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <RouterLink
+      <PartyCard
         v-for="p in parties"
         :key="p.code"
-        :to="`/parties/${p.code}`"
-        class="card group cursor-pointer no-underline"
-        style="text-decoration:none"
-      >
-        <div class="flex items-start justify-between mb-4">
-          <div>
-            <div class="text-xs font-mono mb-1" style="color:var(--c-muted)">{{ p.code }}</div>
-            <div class="flex items-center gap-2">
-              <span :class="statusBadge(p.status)" class="badge">{{ p.status }}</span>
-            </div>
-          </div>
-          <span class="text-2xl">🎮</span>
-        </div>
-        <div class="flex gap-4 text-sm" style="color:var(--c-muted)">
-          <span>👥 {{ p.attendees.length }}</span>
-          <span>📋 {{ p.options.length }} games</span>
-          <span>🍺 {{ p.beerCount }}</span>
-        </div>
-      </RouterLink>
+        :party="p"
+      />
     </TransitionGroup>
     </div>
   </main>
@@ -60,17 +43,10 @@
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getParties, type PartyDTO } from '@/api'
+import PartyCard from '@/components/PartyCard.vue'
 
 const parties = ref<PartyDTO[]>([])
 const loading = ref(true)
-
-function statusBadge(status: string) {
-  return {
-    'badge-nomination': status === 'NOMINATION',
-    'badge-voting': status === 'VOTING',
-    'badge-results': status === 'RESULTS',
-  }
-}
 
 onMounted(async () => {
   try {
