@@ -95,7 +95,7 @@ func (r *PartyRepository) InitTable() error {
 		DEFINE TABLE IF NOT EXISTS parties SCHEMAFULL;
 		DEFINE FIELD IF NOT EXISTS code ON TABLE parties TYPE string;
 		DEFINE FIELD IF NOT EXISTS attendees ON TABLE parties TYPE array<string>;
-		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: int, imageUrl: string}>;
+		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: option<int>, imageUrl: option<string>}>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
 		DEFINE FIELD IF NOT EXISTS results ON TABLE parties TYPE option<object>;
 		DEFINE FIELD IF NOT EXISTS pollId ON TABLE parties TYPE option<string>;

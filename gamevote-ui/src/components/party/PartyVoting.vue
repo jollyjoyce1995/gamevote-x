@@ -2,30 +2,22 @@
   <section>
     <div v-if="alreadyVoted" class="card text-center py-8">
       <p class="text-lg mb-2">✅ You've voted!</p>
-      <p class="text-sm" style="color:var(--c-muted)">Waiting for others: {{ outstanding.join(', ') || 'All done!' }}</p>
+      <p class="text-sm" style="color:var(--c-muted)">Waiting for others: {{
+          outstanding.join(', ') || 'All done!'
+        }}</p>
     </div>
     <div v-else class="card">
       <h2 class="text-lg font-bold mb-6">👍👎 Vote on Games</h2>
       <div class="flex flex-col gap-4">
         <div
-          v-for="opt in party?.options"
-          :key="opt.name"
-          class="flex items-center gap-3 p-3 rounded-xl"
-          style="background:var(--c-bg);border:1px solid var(--c-border)"
+            v-for="opt in party?.options"
+            :key="opt.name"
+            class="flex items-center gap-3 p-3 rounded-xl"
+            style="background:var(--c-bg);border:1px solid var(--c-border)"
         >
-          <span class="font-medium flex-1">{{ opt.name }}</span>
-          <div class="flex gap-2">
-            <button
-              class="vote-btn like"
-              :class="{ active: currentVotes[opt.name!] === 1 }"
-              @click="setVote(opt.name!, 1)"
-            >👍</button>
-            <button
-              class="vote-btn dislike"
-              :class="{ active: currentVotes[opt.name!] === -1 }"
-              @click="setVote(opt.name!, -1)"
-            >👎</button>
-          </div>
+          <GameItem mode="voting" :game="opt"
+                    @like="vote"
+          />
         </div>
       </div>
       <button class="btn btn-primary w-full mt-6" :disabled="submittingVote" @click="submitVotes">
@@ -43,10 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { usePartyStore } from '@/stores/party'
-import { pollsApi } from '@/api-client'
+import {ref, computed, onMounted, watch} from 'vue'
+import {useAuthStore} from '@/stores/auth'
+import {usePartyStore} from '@/stores/party'
+import {pollsApi} from '@/api-client'
+import GameItem from "@/components/party/GameItem.vue";
 
 const authStore = useAuthStore()
 const partyStore = usePartyStore()
@@ -83,10 +76,14 @@ async function submitVotes() {
 async function loadOutstanding() {
   const pollId = party.value?.links?.['poll']?.href?.split('/').pop()
   if (!pollId) return
-  outstanding.value = await pollsApi.pollsIdOutstandingGet({ id: pollId }).catch(() => [])
+  outstanding.value = await pollsApi.pollsIdOutstandingGet({id: pollId}).catch(() => [])
   if (!outstanding.value.includes(authStore.username!)) {
     alreadyVoted.value = true
   }
+}
+
+function vote(name: string, like: boolean) {
+  console.log('vote', name, like)
 }
 
 onMounted(() => {

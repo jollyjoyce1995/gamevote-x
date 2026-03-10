@@ -1,5 +1,5 @@
 <template>
-  <nav class="glass sticky top-0 z-50 px-6 py-8 flex items-center justify-between gap-4">
+  <nav class="glass sticky top-0 z-50 px-6 py-2 flex items-center justify-between gap-4">
     <!-- Left: Logo + Party code -->
     <div class="flex items-center gap-4">
       <RouterLink to="/" class="text-3xl font-extrabold grad-text tracking-tight">🎲 GameVote</RouterLink>

@@ -57,7 +57,7 @@ func (r *PollRepository) InitTable() error {
 	ctx := context.Background()
 	query := `
 		DEFINE TABLE IF NOT EXISTS polls SCHEMAFULL;
-		DEFINE FIELD IF NOT EXISTS options ON TABLE polls TYPE array<object>;
+		DEFINE FIELD IF NOT EXISTS options ON TABLE polls TYPE array<{name:string, appId: option<int>, imageUrl: option<string>}>;
 		DEFINE FIELD IF NOT EXISTS attendees ON TABLE polls TYPE array<string>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE polls TYPE string ASSERT $value INSIDE ['IN_PROGRESS', 'COMPLETED'];
 	`

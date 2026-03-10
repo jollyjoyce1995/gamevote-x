@@ -4,10 +4,11 @@
       <h2 class="text-lg font-bold mb-4">🎮 Nominate Games</h2>
 
       <!-- Steam search -->
-      <div class="flex gap-2 mb-3">
+      <div class="flex gap-4 mb-4">
         <input
           v-model="gameSearch"
-          class="input"
+          name="gameSearch"
+          class="input py-0"
           placeholder="Search Steam games..."
           @input="onSearchInput"
         />
@@ -15,7 +16,7 @@
       </div>
 
       <!-- Steam suggestions -->
-      <div v-if="suggestions.length" class="rounded-xl overflow-hidden mb-4" style="border:1px solid var(--c-border); background: var(--c-bg-card)">
+      <div v-if="suggestions.length" class="rounded-xl overflow-hidden flex flex-col gap-2" style="border:1px solid var(--c-border); background: var(--c-bg-card)">
         <GameItem
           v-for="g in suggestions"
           :key="g.appId"
