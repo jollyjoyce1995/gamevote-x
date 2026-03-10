@@ -16,7 +16,7 @@
       </div>
 
       <!-- Steam suggestions -->
-      <div v-if="suggestions.length" class="rounded-xl overflow-hidden flex flex-col gap-2" style="border:1px solid var(--c-border); background: var(--c-bg-card)">
+      <div v-if="suggestions.length" class="rounded-xl overflow-hidden flex flex-col gap-2">
         <GameItem
           v-for="g in suggestions"
           :key="g.appId"

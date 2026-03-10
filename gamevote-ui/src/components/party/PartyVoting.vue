@@ -9,16 +9,14 @@
     <div v-else class="card">
       <h2 class="text-lg font-bold mb-6">👍👎 Vote on Games</h2>
       <div class="flex flex-col gap-4">
-        <div
+        <GameItem
             v-for="opt in party?.options"
+            mode="voting"
             :key="opt.name"
+            :game="opt"
+            @like="vote"
             class="flex items-center gap-3 p-3 rounded-xl"
-            style="background:var(--c-bg);border:1px solid var(--c-border)"
-        >
-          <GameItem mode="voting" :game="opt"
-                    @like="vote"
-          />
-        </div>
+        />
       </div>
       <button class="btn btn-primary w-full mt-6" :disabled="submittingVote" @click="submitVotes">
         {{ submittingVote ? 'Submitting...' : '✅ Submit Votes' }}

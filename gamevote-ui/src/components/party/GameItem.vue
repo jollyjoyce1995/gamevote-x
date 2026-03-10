@@ -1,8 +1,6 @@
 <template>
   <div
       class="flex items-center gap-4 px-2 rounded-2xl relative group overflow-hidden transition-all duration-200 cursor-pointer hover:bg-gray-700"
-      :class="containerClass"
-      :style="containerStyle"
       @click="handleClick"
   >
     <img v-if="imageUrl" :src="imageUrl" class="w-1/4 object-cover rounded shadow-sm" alt=""/>
@@ -45,16 +43,6 @@ const mode = computed(() => props.mode)
 const gameName = computed(() => props.game.name || '')
 const appId = computed(() => 'appId' in props.game ? props.game.appId : undefined)
 const imageUrl = computed(() => 'imageUrl' in props.game ? props.game.imageUrl : undefined)
-
-const containerClass = computed(() => {
-  if (props.mode === 'suggestion') return ''
-  return 'px-3 py-3'
-})
-
-const containerStyle = computed(() => {
-  if (props.mode === 'nominated') return {background: 'var(--c-bg-card)', border: '1px solid var(--c-border)'}
-  return {}
-})
 
 function handleClick() {
   if (props.mode === 'suggestion') {
