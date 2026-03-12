@@ -14,6 +14,7 @@
             mode="voting"
             :key="opt.name"
             :game="opt"
+            :like="currentVotes[opt.name!] ?? 0"
             @like="vote"
             class="flex items-center gap-3 p-3 rounded-xl"
         />
@@ -49,8 +50,8 @@ const submittingVote = ref(false)
 const alreadyVoted = ref(false)
 const outstanding = ref<string[]>([])
 
-function setVote(game: string, val: number) {
-  currentVotes.value[game] = currentVotes.value[game] === val ? 0 : val
+function vote(name: string, like: number) {
+  currentVotes.value[name] = like;
 }
 
 async function submitVotes() {
@@ -62,7 +63,8 @@ async function submitVotes() {
     await pollsApi.pollsIdVotesAttendeePut({
       id: pollId,
       attendee: authStore.username,
-      choices: currentVotes.value
+      choices: undefined as any
+      //choices: currentVotes.value
     })
     alreadyVoted.value = true
     await loadOutstanding()
@@ -79,11 +81,6 @@ async function loadOutstanding() {
     alreadyVoted.value = true
   }
 }
-
-function vote(name: string, like: boolean) {
-  console.log('vote', name, like)
-}
-
 onMounted(() => {
   if (party.value?.status === 'VOTING') {
     loadOutstanding()

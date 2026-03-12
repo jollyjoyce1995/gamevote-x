@@ -14,11 +14,13 @@
     <div v-if="mode == 'voting'" class="flex gap-2">
       <button
           class="vote-btn like"
-          @click="setVote(game, true)"
+          :class="{ active: like === 1 }"
+          @click="setVote(game, 1)"
       >👍</button>
       <button
           class="vote-btn dislike"
-          @click="setVote(game, false)"
+          :class="{ active: like === -1 }"
+          @click="setVote(game, -1)"
       >👎</button>
     </div>
   </div>
@@ -30,13 +32,14 @@ import type {ModelsPartyOption} from '@/generated-api'
 
 const props = defineProps<{
   mode: 'suggestion' | 'nominated' | 'voting',
-  game: ModelsPartyOption
+  game: ModelsPartyOption,
+  like?: number,
 }>()
 
 const emit = defineEmits<{
   (e: 'nominate'): void
   (e: 'remove', name: string): void,
-  (e: 'like', name: string, like: boolean): void,
+  (e: 'like', name: string, like: number): void,
 }>()
 
 const mode = computed(() => props.mode)
@@ -50,7 +53,7 @@ function handleClick() {
   }
 }
 
-function setVote(game: ModelsPartyOption, like: boolean) {
+function setVote(game: ModelsPartyOption, like: number) {
   emit('like', game.name!, like)
 }
 </script>
