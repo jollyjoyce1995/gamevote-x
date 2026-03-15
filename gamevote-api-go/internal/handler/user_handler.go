@@ -28,7 +28,7 @@ type UserLoginRequest struct {
 // @Accept       application/json
 // @Produce      application/json
 // @Param        req body UserLoginRequest true "Login Request"
-// @Success      200  {object}  models.User
+// @Success      200 {object} models.User
 // @Router       /users [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req UserLoginRequest

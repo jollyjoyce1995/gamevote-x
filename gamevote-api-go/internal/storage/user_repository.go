@@ -15,7 +15,7 @@ type UserRepository struct{}
 
 func (r *UserRepository) Save(user *models.User) error {
 	ctx := context.Background()
-	if user.ID == "" {
+	if user.ID == nil {
 		res, err := surrealdb.Create[models.User](ctx, DB, "users", user)
 		if err == nil && res != nil {
 			user.ID = res.ID
@@ -23,7 +23,7 @@ func (r *UserRepository) Save(user *models.User) error {
 		return err
 	}
 
-	_, err := surrealdb.Update[models.User](ctx, DB, user.ID, user)
+	_, err := surrealdb.Update[models.User](ctx, DB, *user.ID, user)
 	return err
 }
 

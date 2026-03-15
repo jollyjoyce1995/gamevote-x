@@ -300,6 +300,7 @@ type PartyDTO struct {
 	Links           map[string]Link      `json:"_links"`
 	BeerCount       int                  `json:"beerCount"`
 	BeerPerAttendee map[string]int       `json:"beerPerAttendee"`
+	PollID          *string              `json:"pollId,omitempty"`
 }
 
 type Link struct {
@@ -340,6 +341,7 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		Links:           links,
 		BeerCount:       len(beers),
 		BeerPerAttendee: beerPerAttendee,
+		PollID:          &party.PollID,
 	}, nil
 }
 
