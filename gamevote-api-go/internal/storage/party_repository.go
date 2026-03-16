@@ -98,7 +98,6 @@ func (r *PartyRepository) InitTable() error {
 		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: option<int>, imageUrl: option<string>}>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
 		DEFINE FIELD IF NOT EXISTS results ON TABLE parties TYPE option<object>;
-		DEFINE FIELD IF NOT EXISTS pollId ON TABLE parties TYPE option<string>;
 	`
 	slog.Debug("Initializing parties table")
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)

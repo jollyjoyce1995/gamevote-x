@@ -52,8 +52,8 @@ func main() {
 
 	// Services
 	pollService := service.NewPollService(pollRepo, voteRepo)
-	partyService := service.NewPartyService(partyRepo, beerRepo, pollService, broker)
 	userService := service.NewUserService(userRepo)
+	partyService := service.NewPartyService(partyRepo, beerRepo, pollService, userService, broker)
 	drinkTypeService := service.NewDrinkTypeService(drinkTypeRepo)
 	steamWorker := service.NewSteamWorker(gameRepo)
 
@@ -65,7 +65,7 @@ func main() {
 
 	// Handlers
 	partyHandler := handler.NewPartyHandler(partyService, broker)
-	pollHandler := handler.NewPollHandler(pollService)
+	//pollHandler := handler.NewPollHandler(pollService)
 	userHandler := handler.NewUserHandler(userService)
 	drinkTypeHandler := handler.NewDrinkTypeHandler(drinkTypeService)
 	gameHandler := handler.NewGameHandler(steamWorker)
@@ -105,16 +105,13 @@ func main() {
 	router.POST("/parties/:code/attendees", partyHandler.PostAttendee)
 	router.DELETE("/parties/:code/attendees/:attendeeId", partyHandler.DeleteAttendee)
 	router.POST("/parties/:code/beers", partyHandler.PostBeer)
+	router.POST("/parties/:code/votes/:attendee", partyHandler.PostVote)
 
 	// Poll routes
-	router.POST("/polls", pollHandler.CreatePoll)
-	router.GET("/polls", pollHandler.GetPolls)
-	router.GET("/polls/:id", pollHandler.GetPoll)
-	router.PUT("/polls/:id", pollHandler.PutPoll)
-	router.GET("/polls/:id/votes", pollHandler.GetVotes)
-	router.GET("/polls/:id/outstanding", pollHandler.GetOutstanding)
-	router.PUT("/polls/:id/votes/:attendee", pollHandler.PutVote)
-	router.GET("/polls/:id/results", pollHandler.GetResults)
+	/*	router.PUT("/polls/:id", pollHandler.PutPoll)
+		router.GET("/polls/:id/votes", pollHandler.GetVotes)
+		router.GET("/polls/:id/results", pollHandler.GetResults)
+	*/
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

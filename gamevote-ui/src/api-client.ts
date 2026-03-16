@@ -1,4 +1,4 @@
-import { Configuration, PartiesApi, PollsApi } from './generated-api'
+import { Configuration, PartiesApi } from './generated-api'
 
 const config = new Configuration({
     basePath: 'http://localhost:8080',
@@ -6,4 +6,3 @@ const config = new Configuration({
 })
 
 export const partiesApi = new PartiesApi(config)
-export const pollsApi = new PollsApi(config)

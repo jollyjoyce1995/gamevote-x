@@ -16,13 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   HandlerUserLoginRequest,
-  ModelsUser,
+  ServiceUserDTO,
 } from '../models/index';
 import {
     HandlerUserLoginRequestFromJSON,
     HandlerUserLoginRequestToJSON,
-    ModelsUserFromJSON,
-    ModelsUserToJSON,
+    ServiceUserDTOFromJSON,
+    ServiceUserDTOToJSON,
 } from '../models/index';
 
 export interface UsersPostRequest {
@@ -57,18 +57,18 @@ export class UsersApi extends runtime.BaseAPI {
      * Returns a list of all registered users.
      * Get all users
      */
-    async usersGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ModelsUser>>> {
+    async usersGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceUserDTO>>> {
         const requestOptions = await this.usersGetRequestOpts();
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ModelsUserFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceUserDTOFromJSON));
     }
 
     /**
      * Returns a list of all registered users.
      * Get all users
      */
-    async usersGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ModelsUser>> {
+    async usersGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceUserDTO>> {
         const response = await this.usersGetRaw(initOverrides);
         return await response.value();
     }
@@ -106,18 +106,18 @@ export class UsersApi extends runtime.BaseAPI {
      * Logs in a user by username. If they do not exist, they are created.
      * Login or Register a User
      */
-    async usersPostRaw(requestParameters: UsersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelsUser>> {
+    async usersPostRaw(requestParameters: UsersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceUserDTO>> {
         const requestOptions = await this.usersPostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ModelsUserFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceUserDTOFromJSON(jsonValue));
     }
 
     /**
      * Logs in a user by username. If they do not exist, they are created.
      * Login or Register a User
      */
-    async usersPost(requestParameters: UsersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelsUser> {
+    async usersPost(requestParameters: UsersPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceUserDTO> {
         const response = await this.usersPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

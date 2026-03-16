@@ -311,6 +311,39 @@ func (h *PartyHandler) PatchParty(c *gin.Context) {
 	c.JSON(http.StatusOK, dto)
 }
 
+// PostVote godoc
+// @Summary      Submit a vote
+// @Description  Submit a vote for an attendee
+// @ID 			 PostVote
+// @Tags         parties
+// @Accept       application/json
+// @Produce      application/json
+// @Param        code path string true "Poll ID"
+// @Param        attendee path string true "Attendee Name"
+// @Param        choices body map[string]int true "Choices (-1, 0, or 1)"
+// @Success      204
+// @Router       /parties/{code}/votes/{attendee} [POST]
+func (h *PartyHandler) PostVote(c *gin.Context) {
+	code := c.Param("code")
+	attendee := c.Param("attendee")
+
+	var choices map[string]int
+	if err := c.ShouldBindJSON(&choices); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.PartyService.AddPoll(code, attendee, choices)
+	if err != nil {
+		slog.Error("Failed to add vote", "code", code, "attendee", attendee, "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	slog.Info("Vote added successfully", "code", code, "attendee", attendee)
+
+	c.Status(http.StatusNoContent)
+}
+
 type BeerDTO struct {
 	Attendee string `json:"attendee"`
 }

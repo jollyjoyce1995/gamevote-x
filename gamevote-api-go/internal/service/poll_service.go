@@ -4,8 +4,9 @@ import (
 	"errors"
 	"gamevote-api-go/internal/models"
 	"gamevote-api-go/internal/storage"
-	"log/slog"
 	"sort"
+
+	surrealmodels "github.com/surrealdb/surrealdb.go/pkg/models"
 )
 
 type PollService struct {
@@ -17,9 +18,7 @@ func NewPollService(pollRepo *storage.PollRepository, voteRepo *storage.VoteRepo
 	return &PollService{PollRepo: pollRepo, VoteRepo: voteRepo}
 }
 
-func (s *PollService) Create(poll *models.Poll) (*models.Poll, error) {
-	poll.Status = models.PollStatusInProgress
-	slog.Info("Creating new poll", "options_count", len(poll.Options))
+func (s *PollService) Upsert(poll *models.Poll) (*models.Poll, error) {
 	err := s.PollRepo.Save(poll)
 	return poll, err
 }
@@ -28,8 +27,12 @@ func (s *PollService) GetPolls() ([]models.Poll, error) {
 	return s.PollRepo.FindAll()
 }
 
-func (s *PollService) GetPoll(id string) (*models.Poll, error) {
+func (s *PollService) GetPoll(id *surrealmodels.RecordID) (*models.Poll, error) {
 	return s.PollRepo.FindByID(id)
+}
+
+func (s *PollService) GetPollsByPartyIdAndAttendee(id surrealmodels.RecordID, attendee surrealmodels.RecordID) (*models.Poll, error) {
+	return s.PollRepo.FindByPartyIdAndAttendee(id, attendee)
 }
 
 func (s *PollService) UpdatePoll(poll *models.Poll) (*models.Poll, error) {
@@ -65,126 +68,14 @@ func (s *PollService) GetVotes(id string) (map[string]map[string]int, error) {
 	return result, nil
 }
 
-func (s *PollService) AddAttendee(id string, attendee string) error {
-	poll, err := s.PollRepo.FindByID(id)
-	if err != nil {
-		return err
-	}
-	poll.Attendees = append(poll.Attendees, attendee)
-	poll.Status = models.PollStatusInProgress
-	return s.PollRepo.Save(poll)
-}
-
-func (s *PollService) AddVote(id string, attendee string, choices map[string]int) (map[string]int, error) {
-	// Validate choices
-	for _, v := range choices {
-		if v < -1 || v > 1 {
-			return nil, errors.New("bad request: vote value must be between -1 and 1")
-		}
-	}
-
+func (s *PollService) GetResults(id *surrealmodels.RecordID) (map[string]int, error) {
 	poll, err := s.PollRepo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	attendeeExists := false
-	for _, a := range poll.Attendees {
-		if a == attendee {
-			attendeeExists = true
-			break
-		}
-	}
-	if !attendeeExists {
-		return nil, errors.New("bad request: not an attendee")
-	}
-
-	if poll.Status != models.PollStatusInProgress {
-		return nil, errors.New("bad request: poll is completed")
-	}
-
-	// check options
-	for choiceKey := range choices {
-		validOption := false
-		for _, o := range poll.Options {
-			if o.Name == choiceKey {
-				validOption = true
-				break
-			}
-		}
-		if !validOption {
-			return nil, errors.New("bad request: some options are not valid")
-		}
-	}
-
-	votes, err := s.VoteRepo.FindByPollID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, v := range votes {
-		if v.Attendee == attendee {
-			return nil, errors.New("bad request: cannot override vote")
-		}
-	}
-
-	normalizedChoices := make(map[string]int)
-	for _, option := range poll.Options {
-		if val, exists := choices[option.Name]; exists {
-			normalizedChoices[option.Name] = val
-		} else {
-			normalizedChoices[option.Name] = 0
-		}
-	}
-
-	newVote := &models.Vote{
-		PollID:   id,
-		Attendee: attendee,
-		Choices:  normalizedChoices,
-	}
-	err = s.VoteRepo.Save(newVote)
-	if err != nil {
-		return nil, err
-	}
-
-	votes = append(votes, *newVote)
-
-	// Check if all attendees have voted
-	allVoted := true
-	for _, a := range poll.Attendees {
-		hasVoted := false
-		for _, v := range votes {
-			if v.Attendee == a {
-				hasVoted = true
-				break
-			}
-		}
-		if !hasVoted {
-			allVoted = false
-			break
-		}
-	}
-
-	if allVoted {
-		slog.Info("All attendees voted, completing poll", "id", id)
-		poll.Status = models.PollStatusCompleted
-		err = s.PollRepo.Save(poll)
-		if err != nil {
-			slog.Error("Failed to complete poll", "id", id, "error", err)
-			return nil, err
-		}
-	}
-
-	return normalizedChoices, nil
-}
-
-func (s *PollService) GetResults(id string) (map[string]int, error) {
-	poll, err := s.PollRepo.FindByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	votesMap, err := s.GetVotes(id)
+	// TODO: FIX
+	votesMap, err := s.GetVotes(id.String())
 	if err != nil {
 		return nil, err
 	}
@@ -214,25 +105,4 @@ func (s *PollService) GetResults(id string) (map[string]int, error) {
 	}
 
 	return sortedMap, nil
-}
-
-func (s *PollService) GetOutstanding(id string) ([]string, error) {
-	poll, err := s.PollRepo.FindByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	votesMap, err := s.GetVotes(id)
-	if err != nil {
-		return nil, err
-	}
-
-	var outstanding []string
-	for _, a := range poll.Attendees {
-		if _, exists := votesMap[a]; !exists {
-			outstanding = append(outstanding, a)
-		}
-	}
-
-	return outstanding, nil
 }

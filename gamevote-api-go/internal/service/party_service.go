@@ -15,15 +15,17 @@ type PartyService struct {
 	PartyRepo   *storage.PartyRepository
 	BeerRepo    *storage.BeerRepository
 	PollService *PollService
+	UserService *UserService
 	Broker      *SSEBroker
 }
 
-func NewPartyService(partyRepo *storage.PartyRepository, beerRepo *storage.BeerRepository, pollService *PollService, broker *SSEBroker) *PartyService {
+func NewPartyService(partyRepo *storage.PartyRepository, beerRepo *storage.BeerRepository, pollService *PollService, userService *UserService, broker *SSEBroker) *PartyService {
 	rand.Seed(time.Now().UnixNano())
 	return &PartyService{
 		PartyRepo:   partyRepo,
 		BeerRepo:    beerRepo,
 		PollService: pollService,
+		UserService: userService,
 		Broker:      broker,
 	}
 }
@@ -130,39 +132,41 @@ func (s *PartyService) PatchParty(code string, toStatus models.PartyStatus) (*mo
 	}
 
 	if toStatus == models.PartyStatusVoting || toStatus == models.PartyStatusNomination {
-		if party.PollID != "" {
-			poll, err := s.PollService.GetPoll(party.PollID)
-			if err == nil {
-				poll.Status = models.PollStatusCompleted
-				s.PollService.UpdatePoll(poll)
-			}
-			party.PollID = ""
-			party.Results = map[string]int{}
-		}
+		/*		s.PartyRepo.UpdateParty(party)
+				if party.PollID != "" {
+					poll, err := s.PollService.GetPoll(party.PollID)
+					if err == nil {
+						poll.Status = models.PollStatusCompleted
+						s.PollService.UpdatePoll(poll)
+					}
+					party.PollID = ""
+					party.Results = map[string]int{}
+				}*/
 	}
 
 	if toStatus == models.PartyStatusVoting {
-		poll := &models.Poll{
-			Options:   party.Options,
-			Attendees: party.Attendees,
-		}
-		createdPoll, err := s.PollService.Create(poll)
-		if err != nil {
-			return nil, err
-		}
-		party.PollID = createdPoll.ID
-	} else if toStatus == models.PartyStatusResults {
-		if party.PollID != "" {
-			poll, err := s.PollService.GetPoll(party.PollID)
-			if err == nil {
-				results, err := s.PollService.GetResults(poll.ID)
-				if err == nil {
-					party.Results = results
+		/*		poll := &models.Poll{
+					Options:   party.Options,
+					Attendees: party.Attendees,
 				}
-				poll.Status = models.PollStatusCompleted
-				s.PollService.UpdatePoll(poll)
-			}
-		}
+				createdPoll, err := s.PollService.Create(poll)
+				if err != nil {
+					return nil, err
+				}
+				party.PollID = createdPoll.ID
+		*/
+	} else if toStatus == models.PartyStatusResults {
+		/*		if party.PollID != "" {
+				poll, err := s.PollService.GetPoll(party.PollID)
+				if err == nil {
+					results, err := s.PollService.GetResults(poll.ID)
+					if err == nil {
+						party.Results = results
+					}
+					poll.Status = models.PollStatusCompleted
+					s.PollService.UpdatePoll(poll)
+				}
+			}*/
 	}
 
 	party.Status = toStatus
@@ -215,13 +219,13 @@ func (s *PartyService) AddAttendee(code string, value string) error {
 	}
 
 	party.Attendees = append(party.Attendees, value)
-	if party.PollID != "" {
-		err = s.PollService.AddAttendee(party.Code, value)
-		if err != nil {
-			return err
+	/*	if party.PollID != "" {
+			err = s.PollService.AddAttendee(party.Code, value)
+			if err != nil {
+				return err
+			}
 		}
-	}
-
+	*/
 	if err := s.PartyRepo.Save(party); err != nil {
 		return err
 	}
@@ -276,6 +280,59 @@ func (s *PartyService) DeleteOption(code string, name string) error {
 	return nil
 }
 
+func (s *PartyService) AddPoll(code string, attendee string, choices map[string]int) error {
+	party, err := s.PartyRepo.FindByCode(code)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.UserService.FindByUsername(attendee)
+	if err != nil {
+		return err
+	}
+
+	poll, err := s.PollService.GetPollsByPartyIdAndAttendee(*party.ID, *user.ID)
+	if err != nil {
+		return err
+	}
+
+	if poll == nil {
+		poll = &models.Poll{
+			Status:   models.PollStatusInProgress,
+			Attendee: user.ID,
+			Party:    party.ID,
+			Options:  s.MapChoices(party.Options, choices),
+		}
+		poll, err = s.PollService.Upsert(poll)
+		if err != nil {
+			return err
+		}
+	} else {
+		poll.Options = s.MapChoices(party.Options, choices)
+		poll, err = s.PollService.Upsert(poll)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *PartyService) MapChoices(partyOptions []models.PartyOption, choices map[string]int) []models.PartyOptionWithVote {
+	var result []models.PartyOptionWithVote
+
+	for _, option := range partyOptions {
+		vote := choices[option.Name] // returns 0 if not present
+
+		mapped := models.PartyOptionWithVote{
+			PartyOption: option,
+			Vote:        vote,
+		}
+		result = append(result, mapped)
+	}
+
+	return result
+}
+
 func (s *PartyService) PostBeer(code string, attendee string) error {
 	party, err := s.PartyRepo.FindByCode(code)
 	if err != nil {
@@ -300,7 +357,6 @@ type PartyDTO struct {
 	Links           map[string]Link      `json:"_links"`
 	BeerCount       int                  `json:"beerCount"`
 	BeerPerAttendee map[string]int       `json:"beerPerAttendee"`
-	PollID          *string              `json:"pollId,omitempty"`
 }
 
 type Link struct {
@@ -324,13 +380,6 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		beerPerAttendee[a] = count
 	}
 
-	links := map[string]Link{
-		"self": {Href: "/parties/" + party.ID.String()},
-	}
-	if party.PollID != "" {
-		links["poll"] = Link{Href: "/polls/" + party.PollID}
-	}
-
 	return &PartyDTO{
 		ID:              party.ID.String(),
 		Attendees:       party.Attendees,
@@ -338,10 +387,8 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		Status:          string(party.Status),
 		Results:         party.Results,
 		Code:            party.Code,
-		Links:           links,
 		BeerCount:       len(beers),
 		BeerPerAttendee: beerPerAttendee,
-		PollID:          &party.PollID,
 	}, nil
 }
 

@@ -441,230 +441,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/polls": {
-            "get": {
-                "description": "Retrieve a list of all polls",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Get all polls",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Poll"
-                            }
-                        }
-                    }
-                }
-            },
+        "/parties/{code}/votes/{attendee}": {
             "post": {
-                "description": "Create a new poll manually",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Create a poll",
-                "parameters": [
-                    {
-                        "description": "Poll Details",
-                        "name": "poll",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Poll"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.Poll"
-                        }
-                    }
-                }
-            }
-        },
-        "/polls/{id}": {
-            "get": {
-                "description": "Get a poll by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Get a poll",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Poll ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.Poll"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a poll details (used to resume or complete)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Update a poll",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Poll ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Poll Details",
-                        "name": "poll",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Poll"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.Poll"
-                        }
-                    }
-                }
-            }
-        },
-        "/polls/{id}/outstanding": {
-            "get": {
-                "description": "Get attendees who have not yet voted",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Get outstanding voters",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Poll ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/polls/{id}/results": {
-            "get": {
-                "description": "Get aggregated poll results",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Get poll results",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Poll ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/polls/{id}/votes": {
-            "get": {
-                "description": "Get votes mapping the attendee to their choices",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "polls"
-                ],
-                "summary": "Get all votes",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Poll ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/polls/{id}/votes/{attendee}": {
-            "put": {
                 "description": "Submit a vote for an attendee",
                 "consumes": [
                     "application/json"
@@ -673,14 +451,15 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "polls"
+                    "parties"
                 ],
                 "summary": "Submit a vote",
+                "operationId": "PostVote",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Poll ID",
-                        "name": "id",
+                        "name": "code",
                         "in": "path",
                         "required": true
                     },
@@ -705,14 +484,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer"
-                            }
-                        }
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -733,7 +506,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.User"
+                                "$ref": "#/definitions/service.UserDTO"
                             }
                         }
                     }
@@ -766,7 +539,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/service.UserDTO"
                         }
                     }
                 }
@@ -866,57 +639,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Poll": {
-            "type": "object",
-            "properties": {
-                "attendees": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "options": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.PartyOption"
-                    }
-                },
-                "status": {
-                    "$ref": "#/definitions/models.PollStatus"
-                }
-            }
-        },
-        "models.PollStatus": {
-            "type": "string",
-            "enum": [
-                "IN_PROGRESS",
-                "COMPLETED"
-            ],
-            "x-enum-varnames": [
-                "PollStatusInProgress",
-                "PollStatusCompleted"
-            ]
-        },
-        "models.User": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "lastLogin": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "service.Link": {
             "type": "object",
             "properties": {
@@ -968,6 +690,20 @@ const docTemplate = `{
                     }
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.UserDTO": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "lastLogin": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

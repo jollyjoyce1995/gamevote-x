@@ -14,43 +14,11 @@
 
 
 import * as runtime from '../runtime';
-import type {
-  ModelsPoll,
-} from '../models/index';
-import {
-    ModelsPollFromJSON,
-    ModelsPollToJSON,
-} from '../models/index';
 
-export interface PollsIdGetRequest {
-    id: string;
-}
-
-export interface PollsIdOutstandingGetRequest {
-    id: string;
-}
-
-export interface PollsIdPutRequest {
-    id: string;
-    poll: ModelsPoll;
-}
-
-export interface PollsIdResultsGetRequest {
-    id: string;
-}
-
-export interface PollsIdVotesAttendeePutRequest {
-    id: string;
+export interface PartiesCodeVotesAttendeePostRequest {
+    code: string;
     attendee: string;
     choices: { [key: string]: number; };
-}
-
-export interface PollsIdVotesGetRequest {
-    id: string;
-}
-
-export interface PollsPostRequest {
-    poll: ModelsPoll;
 }
 
 /**
@@ -59,264 +27,27 @@ export interface PollsPostRequest {
 export class PollsApi extends runtime.BaseAPI {
 
     /**
-     * Creates request options for pollsGet without sending the request
+     * Creates request options for partiesCodeVotesAttendeePost without sending the request
      */
-    async pollsGetRequestOpts(): Promise<runtime.RequestOpts> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/polls`;
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Retrieve a list of all polls
-     * Get all polls
-     */
-    async pollsGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ModelsPoll>>> {
-        const requestOptions = await this.pollsGetRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ModelsPollFromJSON));
-    }
-
-    /**
-     * Retrieve a list of all polls
-     * Get all polls
-     */
-    async pollsGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ModelsPoll>> {
-        const response = await this.pollsGetRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdGet without sending the request
-     */
-    async pollsIdGetRequestOpts(requestParameters: PollsIdGetRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
+    async partiesCodeVotesAttendeePostRequestOpts(requestParameters: PartiesCodeVotesAttendeePostRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['code'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdGet().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/polls/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Get a poll by its ID
-     * Get a poll
-     */
-    async pollsIdGetRaw(requestParameters: PollsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelsPoll>> {
-        const requestOptions = await this.pollsIdGetRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ModelsPollFromJSON(jsonValue));
-    }
-
-    /**
-     * Get a poll by its ID
-     * Get a poll
-     */
-    async pollsIdGet(requestParameters: PollsIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelsPoll> {
-        const response = await this.pollsIdGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdOutstandingGet without sending the request
-     */
-    async pollsIdOutstandingGetRequestOpts(requestParameters: PollsIdOutstandingGetRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdOutstandingGet().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/polls/{id}/outstanding`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Get attendees who have not yet voted
-     * Get outstanding voters
-     */
-    async pollsIdOutstandingGetRaw(requestParameters: PollsIdOutstandingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
-        const requestOptions = await this.pollsIdOutstandingGetRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * Get attendees who have not yet voted
-     * Get outstanding voters
-     */
-    async pollsIdOutstandingGet(requestParameters: PollsIdOutstandingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
-        const response = await this.pollsIdOutstandingGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdPut without sending the request
-     */
-    async pollsIdPutRequestOpts(requestParameters: PollsIdPutRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdPut().'
-            );
-        }
-
-        if (requestParameters['poll'] == null) {
-            throw new runtime.RequiredError(
-                'poll',
-                'Required parameter "poll" was null or undefined when calling pollsIdPut().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/polls/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        return {
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ModelsPollToJSON(requestParameters['poll']),
-        };
-    }
-
-    /**
-     * Update a poll details (used to resume or complete)
-     * Update a poll
-     */
-    async pollsIdPutRaw(requestParameters: PollsIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelsPoll>> {
-        const requestOptions = await this.pollsIdPutRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ModelsPollFromJSON(jsonValue));
-    }
-
-    /**
-     * Update a poll details (used to resume or complete)
-     * Update a poll
-     */
-    async pollsIdPut(requestParameters: PollsIdPutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelsPoll> {
-        const response = await this.pollsIdPutRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdResultsGet without sending the request
-     */
-    async pollsIdResultsGetRequestOpts(requestParameters: PollsIdResultsGetRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdResultsGet().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/polls/{id}/results`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Get aggregated poll results
-     * Get poll results
-     */
-    async pollsIdResultsGetRaw(requestParameters: PollsIdResultsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: number; }>> {
-        const requestOptions = await this.pollsIdResultsGetRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * Get aggregated poll results
-     * Get poll results
-     */
-    async pollsIdResultsGet(requestParameters: PollsIdResultsGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: number; }> {
-        const response = await this.pollsIdResultsGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdVotesAttendeePut without sending the request
-     */
-    async pollsIdVotesAttendeePutRequestOpts(requestParameters: PollsIdVotesAttendeePutRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdVotesAttendeePut().'
+                'code',
+                'Required parameter "code" was null or undefined when calling partiesCodeVotesAttendeePost().'
             );
         }
 
         if (requestParameters['attendee'] == null) {
             throw new runtime.RequiredError(
                 'attendee',
-                'Required parameter "attendee" was null or undefined when calling pollsIdVotesAttendeePut().'
+                'Required parameter "attendee" was null or undefined when calling partiesCodeVotesAttendeePost().'
             );
         }
 
         if (requestParameters['choices'] == null) {
             throw new runtime.RequiredError(
                 'choices',
-                'Required parameter "choices" was null or undefined when calling pollsIdVotesAttendeePut().'
+                'Required parameter "choices" was null or undefined when calling partiesCodeVotesAttendeePost().'
             );
         }
 
@@ -327,13 +58,13 @@ export class PollsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
 
-        let urlPath = `/polls/{id}/votes/{attendee}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+        let urlPath = `/parties/{code}/votes/{attendee}`;
+        urlPath = urlPath.replace(`{${"code"}}`, encodeURIComponent(String(requestParameters['code'])));
         urlPath = urlPath.replace(`{${"attendee"}}`, encodeURIComponent(String(requestParameters['attendee'])));
 
         return {
             path: urlPath,
-            method: 'PUT',
+            method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: requestParameters['choices'],
@@ -344,116 +75,19 @@ export class PollsApi extends runtime.BaseAPI {
      * Submit a vote for an attendee
      * Submit a vote
      */
-    async pollsIdVotesAttendeePutRaw(requestParameters: PollsIdVotesAttendeePutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: number; }>> {
-        const requestOptions = await this.pollsIdVotesAttendeePutRequestOpts(requestParameters);
+    async partiesCodeVotesAttendeePostRaw(requestParameters: PartiesCodeVotesAttendeePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.partiesCodeVotesAttendeePostRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      * Submit a vote for an attendee
      * Submit a vote
      */
-    async pollsIdVotesAttendeePut(requestParameters: PollsIdVotesAttendeePutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: number; }> {
-        const response = await this.pollsIdVotesAttendeePutRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsIdVotesGet without sending the request
-     */
-    async pollsIdVotesGetRequestOpts(requestParameters: PollsIdVotesGetRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling pollsIdVotesGet().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/polls/{id}/votes`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
-    }
-
-    /**
-     * Get votes mapping the attendee to their choices
-     * Get all votes
-     */
-    async pollsIdVotesGetRaw(requestParameters: PollsIdVotesGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: { [key: string]: number; }; }>> {
-        const requestOptions = await this.pollsIdVotesGetRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * Get votes mapping the attendee to their choices
-     * Get all votes
-     */
-    async pollsIdVotesGet(requestParameters: PollsIdVotesGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: { [key: string]: number; }; }> {
-        const response = await this.pollsIdVotesGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates request options for pollsPost without sending the request
-     */
-    async pollsPostRequestOpts(requestParameters: PollsPostRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['poll'] == null) {
-            throw new runtime.RequiredError(
-                'poll',
-                'Required parameter "poll" was null or undefined when calling pollsPost().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-
-        let urlPath = `/polls`;
-
-        return {
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ModelsPollToJSON(requestParameters['poll']),
-        };
-    }
-
-    /**
-     * Create a new poll manually
-     * Create a poll
-     */
-    async pollsPostRaw(requestParameters: PollsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelsPoll>> {
-        const requestOptions = await this.pollsPostRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ModelsPollFromJSON(jsonValue));
-    }
-
-    /**
-     * Create a new poll manually
-     * Create a poll
-     */
-    async pollsPost(requestParameters: PollsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelsPoll> {
-        const response = await this.pollsPostRaw(requestParameters, initOverrides);
-        return await response.value();
+    async partiesCodeVotesAttendeePost(requestParameters: PartiesCodeVotesAttendeePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.partiesCodeVotesAttendeePostRaw(requestParameters, initOverrides);
     }
 
 }

@@ -5,17 +5,16 @@ All URIs are relative to *http://localhost:8080*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**partiesCodeAttendeesAttendeeIdDelete**](PartiesApi.md#partiescodeattendeesattendeeiddelete) | **DELETE** /parties/{code}/attendees/{attendeeId} | Delete an attendee |
-| [**partiesCodeAttendeesGet**](PartiesApi.md#partiescodeattendeesget) | **GET** /parties/{code}/attendees | Get party attendees |
 | [**partiesCodeAttendeesPost**](PartiesApi.md#partiescodeattendeespost) | **POST** /parties/{code}/attendees | Add an attendee |
 | [**partiesCodeBeersPost**](PartiesApi.md#partiescodebeerspost) | **POST** /parties/{code}/beers | Add a beer |
 | [**partiesCodeGet**](PartiesApi.md#partiescodeget) | **GET** /parties/{code} | Get a party |
 | [**partiesCodeOptionsGameNameDelete**](PartiesApi.md#partiescodeoptionsgamenamedelete) | **DELETE** /parties/{code}/options/{gameName} | Delete an option |
-| [**partiesCodeOptionsGet**](PartiesApi.md#partiescodeoptionsget) | **GET** /parties/{code}/options | Get party options |
 | [**partiesCodeOptionsPost**](PartiesApi.md#partiescodeoptionspost) | **POST** /parties/{code}/options | Add an option |
 | [**partiesCodePatch**](PartiesApi.md#partiescodepatch) | **PATCH** /parties/{code} | Patch a party |
 | [**partiesCodeStreamGet**](PartiesApi.md#partiescodestreamget) | **GET** /parties/{code}/stream | SSE stream for a party |
 | [**partiesGet**](PartiesApi.md#partiesget) | **GET** /parties | Get all parties |
 | [**partiesPost**](PartiesApi.md#partiespost) | **POST** /parties | Create a new party |
+| [**postVote**](PartiesApi.md#postvote) | **POST** /parties/{code}/votes/{attendee} | Submit a vote |
 
 
 
@@ -79,73 +78,6 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## partiesCodeAttendeesGet
-
-> Array&lt;string&gt; partiesCodeAttendeesGet(code)
-
-Get party attendees
-
-Get attendees for a specific party
-
-### Example
-
-```ts
-import {
-  Configuration,
-  PartiesApi,
-} from '';
-import type { PartiesCodeAttendeesGetRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new PartiesApi();
-
-  const body = {
-    // string | Party Code
-    code: code_example,
-  } satisfies PartiesCodeAttendeesGetRequest;
-
-  try {
-    const data = await api.partiesCodeAttendeesGet(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **code** | `string` | Party Code | [Defaults to `undefined`] |
-
-### Return type
-
-**Array<string>**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: `application/json`
 
 
 ### HTTP response details
@@ -423,73 +355,6 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## partiesCodeOptionsGet
-
-> Array&lt;string&gt; partiesCodeOptionsGet(code)
-
-Get party options
-
-Get options for a specific party
-
-### Example
-
-```ts
-import {
-  Configuration,
-  PartiesApi,
-} from '';
-import type { PartiesCodeOptionsGetRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new PartiesApi();
-
-  const body = {
-    // string | Party Code
-    code: code_example,
-  } satisfies PartiesCodeOptionsGetRequest;
-
-  try {
-    const data = await api.partiesCodeOptionsGet(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **code** | `string` | Party Code | [Defaults to `undefined`] |
-
-### Return type
-
-**Array<string>**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: `application/json`
 
 
 ### HTTP response details
@@ -832,6 +697,79 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postVote
+
+> postVote(code, attendee, choices)
+
+Submit a vote
+
+Submit a vote for an attendee
+
+### Example
+
+```ts
+import {
+  Configuration,
+  PartiesApi,
+} from '';
+import type { PostVoteRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new PartiesApi();
+
+  const body = {
+    // string | Poll ID
+    code: code_example,
+    // string | Attendee Name
+    attendee: attendee_example,
+    // { [key: string]: number; } | Choices (-1, 0, or 1)
+    choices: ...,
+  } satisfies PostVoteRequest;
+
+  try {
+    const data = await api.postVote(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **code** | `string` | Poll ID | [Defaults to `undefined`] |
+| **attendee** | `string` | Attendee Name | [Defaults to `undefined`] |
+| **choices** | `{ [key: string]: number; }` | Choices (-1, 0, or 1) | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

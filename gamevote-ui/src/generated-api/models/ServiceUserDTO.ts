@@ -16,64 +16,57 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface ModelsUser
+ * @interface ServiceUserDTO
  */
-export interface ModelsUser {
+export interface ServiceUserDTO {
     /**
      * 
      * @type {string}
-     * @memberof ModelsUser
+     * @memberof ServiceUserDTO
      */
     createdAt?: string;
     /**
      * 
      * @type {string}
-     * @memberof ModelsUser
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelsUser
+     * @memberof ServiceUserDTO
      */
     lastLogin?: string;
     /**
      * 
      * @type {string}
-     * @memberof ModelsUser
+     * @memberof ServiceUserDTO
      */
     username?: string;
 }
 
 /**
- * Check if a given object implements the ModelsUser interface.
+ * Check if a given object implements the ServiceUserDTO interface.
  */
-export function instanceOfModelsUser(value: object): value is ModelsUser {
+export function instanceOfServiceUserDTO(value: object): value is ServiceUserDTO {
     return true;
 }
 
-export function ModelsUserFromJSON(json: any): ModelsUser {
-    return ModelsUserFromJSONTyped(json, false);
+export function ServiceUserDTOFromJSON(json: any): ServiceUserDTO {
+    return ServiceUserDTOFromJSONTyped(json, false);
 }
 
-export function ModelsUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelsUser {
+export function ServiceUserDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean): ServiceUserDTO {
     if (json == null) {
         return json;
     }
     return {
         
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
-        'id': json['id'] == null ? undefined : json['id'],
         'lastLogin': json['lastLogin'] == null ? undefined : json['lastLogin'],
         'username': json['username'] == null ? undefined : json['username'],
     };
 }
 
-export function ModelsUserToJSON(json: any): ModelsUser {
-    return ModelsUserToJSONTyped(json, false);
+export function ServiceUserDTOToJSON(json: any): ServiceUserDTO {
+    return ServiceUserDTOToJSONTyped(json, false);
 }
 
-export function ModelsUserToJSONTyped(value?: ModelsUser | null, ignoreDiscriminator: boolean = false): any {
+export function ServiceUserDTOToJSONTyped(value?: ServiceUserDTO | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -81,7 +74,6 @@ export function ModelsUserToJSONTyped(value?: ModelsUser | null, ignoreDiscrimin
     return {
         
         'createdAt': value['createdAt'],
-        'id': value['id'],
         'lastLogin': value['lastLogin'],
         'username': value['username'],
     };

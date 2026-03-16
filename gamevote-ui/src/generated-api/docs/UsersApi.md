@@ -11,7 +11,7 @@ All URIs are relative to *http://localhost:8080*
 
 ## usersGet
 
-> Array&lt;ModelsUser&gt; usersGet()
+> Array&lt;ServiceUserDTO&gt; usersGet()
 
 Get all users
 
@@ -48,7 +48,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Array&lt;ModelsUser&gt;**](ModelsUser.md)
+[**Array&lt;ServiceUserDTO&gt;**](ServiceUserDTO.md)
 
 ### Authorization
 
@@ -70,7 +70,7 @@ No authorization required
 
 ## usersPost
 
-> ModelsUser usersPost(req)
+> ServiceUserDTO usersPost(req)
 
 Login or Register a User
 
@@ -115,7 +115,7 @@ example().catch(console.error);
 
 ### Return type
 
-[**ModelsUser**](ModelsUser.md)
+[**ServiceUserDTO**](ServiceUserDTO.md)
 
 ### Authorization
 

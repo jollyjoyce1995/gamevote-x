@@ -60,40 +60,6 @@ definitions:
       name:
         type: string
     type: object
-  models.Poll:
-    properties:
-      attendees:
-        items:
-          type: string
-        type: array
-      id:
-        type: string
-      options:
-        items:
-          $ref: '#/definitions/models.PartyOption'
-        type: array
-      status:
-        $ref: '#/definitions/models.PollStatus'
-    type: object
-  models.PollStatus:
-    enum:
-    - IN_PROGRESS
-    - COMPLETED
-    type: string
-    x-enum-varnames:
-    - PollStatusInProgress
-    - PollStatusCompleted
-  models.User:
-    properties:
-      createdAt:
-        type: string
-      id:
-        type: string
-      lastLogin:
-        type: string
-      username:
-        type: string
-    type: object
   service.Link:
     properties:
       href:
@@ -128,6 +94,15 @@ definitions:
           type: integer
         type: object
       status:
+        type: string
+    type: object
+  service.UserDTO:
+    properties:
+      createdAt:
+        type: string
+      lastLogin:
+        type: string
+      username:
         type: string
     type: object
 host: localhost:8080
@@ -418,161 +393,16 @@ paths:
       summary: SSE stream for a party
       tags:
       - parties
-  /polls:
-    get:
-      description: Retrieve a list of all polls
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.Poll'
-            type: array
-      summary: Get all polls
-      tags:
-      - polls
+  /parties/{code}/votes/{attendee}:
     post:
       consumes:
       - application/json
-      description: Create a new poll manually
-      parameters:
-      - description: Poll Details
-        in: body
-        name: poll
-        required: true
-        schema:
-          $ref: '#/definitions/models.Poll'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Poll'
-      summary: Create a poll
-      tags:
-      - polls
-  /polls/{id}:
-    get:
-      description: Get a poll by its ID
-      parameters:
-      - description: Poll ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Poll'
-      summary: Get a poll
-      tags:
-      - polls
-    put:
-      consumes:
-      - application/json
-      description: Update a poll details (used to resume or complete)
-      parameters:
-      - description: Poll ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Poll Details
-        in: body
-        name: poll
-        required: true
-        schema:
-          $ref: '#/definitions/models.Poll'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.Poll'
-      summary: Update a poll
-      tags:
-      - polls
-  /polls/{id}/outstanding:
-    get:
-      description: Get attendees who have not yet voted
-      parameters:
-      - description: Poll ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-      summary: Get outstanding voters
-      tags:
-      - polls
-  /polls/{id}/results:
-    get:
-      description: Get aggregated poll results
-      parameters:
-      - description: Poll ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: integer
-            type: object
-      summary: Get poll results
-      tags:
-      - polls
-  /polls/{id}/votes:
-    get:
-      description: Get votes mapping the attendee to their choices
-      parameters:
-      - description: Poll ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              additionalProperties:
-                type: integer
-              type: object
-            type: object
-      summary: Get all votes
-      tags:
-      - polls
-  /polls/{id}/votes/{attendee}:
-    put:
-      consumes:
-      - application/json
       description: Submit a vote for an attendee
+      operationId: PostVote
       parameters:
       - description: Poll ID
         in: path
-        name: id
+        name: code
         required: true
         type: string
       - description: Attendee Name
@@ -591,15 +421,11 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: integer
-            type: object
+        "204":
+          description: No Content
       summary: Submit a vote
       tags:
-      - polls
+      - parties
   /users:
     get:
       description: Returns a list of all registered users.
@@ -610,7 +436,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.User'
+              $ref: '#/definitions/service.UserDTO'
             type: array
       summary: Get all users
       tags:
@@ -632,7 +458,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/service.UserDTO'
       summary: Login or Register a User
       tags:
       - users

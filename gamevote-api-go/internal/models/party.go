@@ -23,5 +23,4 @@ type Party struct {
 	Options   []PartyOption    `json:"options" surreal:"options"`
 	Status    PartyStatus      `json:"status" surreal:"status"`
 	Results   map[string]int   `json:"results,omitempty" surreal:"results"`
-	PollID    string           `json:"pollId,omitempty" surreal:"pollId"`
 }

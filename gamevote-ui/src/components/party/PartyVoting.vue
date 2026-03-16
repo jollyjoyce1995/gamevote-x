@@ -37,7 +37,7 @@
 import {ref, computed, onMounted, watch} from 'vue'
 import {useAuthStore} from '@/stores/auth'
 import {usePartyStore} from '@/stores/party'
-import {pollsApi} from '@/api-client'
+import {partiesApi} from '@/api-client'
 import GameItem from "@/components/party/GameItem.vue";
 
 const authStore = useAuthStore()
@@ -57,14 +57,14 @@ function vote(name: string, like: number) {
 async function submitVotes() {
   if (!authStore.username) return
   submittingVote.value = true
+  if(!party.value?.code){
+    return
+  }
   try {
-    const pollId = party.value?.links?.['poll']?.href?.split('/').pop()
-    if (!pollId) return
-    await pollsApi.pollsIdVotesAttendeePut({
-      id: pollId,
+    await partiesApi.postVote({
+      code: party.value.code,
       attendee: authStore.username,
-      choices: undefined as any
-      //choices: currentVotes.value
+      choices: currentVotes.value,
     })
     alreadyVoted.value = true
     await loadOutstanding()

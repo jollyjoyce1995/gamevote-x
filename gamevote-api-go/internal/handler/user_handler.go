@@ -28,7 +28,7 @@ type UserLoginRequest struct {
 // @Accept       application/json
 // @Produce      application/json
 // @Param        req body UserLoginRequest true "Login Request"
-// @Success      200 {object} models.User
+// @Success      200 {object} service.UserDTO
 // @Router       /users [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req UserLoginRequest
@@ -53,7 +53,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Description  Returns a list of all registered users.
 // @Tags         users
 // @Produce      application/json
-// @Success      200  {array}   models.User
+// @Success      200  {array} service.UserDTO
 // @Router       /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	users, err := h.UserService.FindAll()

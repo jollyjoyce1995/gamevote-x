@@ -1,26 +1,26 @@
 
-# ModelsPartyOption
+# ServiceUserDTO
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`appId` | number
-`imageUrl` | string
-`name` | string
+`createdAt` | string
+`lastLogin` | string
+`username` | string
 
 ## Example
 
 ```typescript
-import type { ModelsPartyOption } from ''
+import type { ServiceUserDTO } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "appId": null,
-  "imageUrl": null,
-  "name": null,
-} satisfies ModelsPartyOption
+  "createdAt": null,
+  "lastLogin": null,
+  "username": null,
+} satisfies ServiceUserDTO
 
 console.log(example)
 
@@ -29,7 +29,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ModelsPartyOption
+const exampleParsed = JSON.parse(exampleJSON) as ServiceUserDTO
 console.log(exampleParsed)
 ```
 

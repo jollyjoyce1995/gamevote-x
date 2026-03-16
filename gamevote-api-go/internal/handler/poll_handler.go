@@ -1,13 +1,7 @@
 package handler
 
 import (
-	"gamevote-api-go/internal/models"
 	"gamevote-api-go/internal/service"
-	"net/http"
-
-	"log/slog"
-
-	"github.com/gin-gonic/gin"
 )
 
 type PollHandler struct {
@@ -18,33 +12,7 @@ func NewPollHandler(pollService *service.PollService) *PollHandler {
 	return &PollHandler{PollService: pollService}
 }
 
-// CreatePoll godoc
-// @Summary      Create a poll
-// @Description  Create a new poll manually
-// @Tags         polls
-// @Accept       json
-// @Produce      json
-// @Param        poll body models.Poll true "Poll Details"
-// @Success      200  {object}  models.Poll
-// @Router       /polls [post]
-func (h *PollHandler) CreatePoll(c *gin.Context) {
-	var poll models.Poll
-	if err := c.ShouldBindJSON(&poll); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	created, err := h.PollService.Create(&poll)
-	if err != nil {
-		slog.Error("Failed to create poll", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	slog.Info("Poll created successfully", "id", created.ID)
-
-	c.JSON(http.StatusOK, created)
-}
-
+/*
 // GetPolls godoc
 // @Summary      Get all polls
 // @Description  Retrieve a list of all polls
@@ -127,56 +95,6 @@ func (h *PollHandler) GetVotes(c *gin.Context) {
 	c.JSON(http.StatusOK, votes)
 }
 
-// GetOutstanding godoc
-// @Summary      Get outstanding voters
-// @Description  Get attendees who have not yet voted
-// @Tags         polls
-// @Produce      json
-// @Param        id path string true "Poll ID"
-// @Success      200  {array}  string
-// @Router       /polls/{id}/outstanding [get]
-func (h *PollHandler) GetOutstanding(c *gin.Context) {
-	id := c.Param("id")
-	outstanding, err := h.PollService.GetOutstanding(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, outstanding)
-}
-
-// PutVote godoc
-// @Summary      Submit a vote
-// @Description  Submit a vote for an attendee
-// @Tags         polls
-// @Accept       json
-// @Produce      json
-// @Param        id path string true "Poll ID"
-// @Param        attendee path string true "Attendee Name"
-// @Param        choices body map[string]int true "Choices (-1, 0, or 1)"
-// @Success      200  {object}  map[string]int
-// @Router       /polls/{id}/votes/{attendee} [put]
-func (h *PollHandler) PutVote(c *gin.Context) {
-	id := c.Param("id")
-	attendee := c.Param("attendee")
-
-	var choices map[string]int
-	if err := c.ShouldBindJSON(&choices); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	normalized, err := h.PollService.AddVote(id, attendee, choices)
-	if err != nil {
-		slog.Error("Failed to add vote", "id", id, "attendee", attendee, "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	slog.Info("Vote added successfully", "id", id, "attendee", attendee)
-
-	c.JSON(http.StatusOK, normalized)
-}
-
 // GetResults godoc
 // @Summary      Get poll results
 // @Description  Get aggregated poll results
@@ -194,3 +112,4 @@ func (h *PollHandler) GetResults(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, results)
 }
+*/

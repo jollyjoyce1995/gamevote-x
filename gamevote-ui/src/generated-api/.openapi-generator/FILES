@@ -1,8 +1,6 @@
-.openapi-generator-ignore
 apis/DrinksApi.ts
 apis/GamesApi.ts
 apis/PartiesApi.ts
-apis/PollsApi.ts
 apis/UsersApi.ts
 apis/index.ts
 docs/DrinksApi.md
@@ -14,13 +12,10 @@ docs/HandlerUserLoginRequest.md
 docs/ModelsDrinkType.md
 docs/ModelsGame.md
 docs/ModelsPartyOption.md
-docs/ModelsPoll.md
-docs/ModelsPollStatus.md
-docs/ModelsUser.md
 docs/PartiesApi.md
-docs/PollsApi.md
 docs/ServiceLink.md
 docs/ServicePartyDTO.md
+docs/ServiceUserDTO.md
 docs/UsersApi.md
 index.ts
 models/HandlerBeerDTO.ts
@@ -30,10 +25,8 @@ models/HandlerUserLoginRequest.ts
 models/ModelsDrinkType.ts
 models/ModelsGame.ts
 models/ModelsPartyOption.ts
-models/ModelsPoll.ts
-models/ModelsPollStatus.ts
-models/ModelsUser.ts
 models/ServiceLink.ts
 models/ServicePartyDTO.ts
+models/ServiceUserDTO.ts
 models/index.ts
 runtime.ts
