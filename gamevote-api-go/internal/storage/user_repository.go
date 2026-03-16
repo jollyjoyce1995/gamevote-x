@@ -87,8 +87,3 @@ func (r *UserRepository) InitTable() error {
 	return err
 }
 
-func (r *UserRepository) DeleteAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE users", nil)
-	return err
-}

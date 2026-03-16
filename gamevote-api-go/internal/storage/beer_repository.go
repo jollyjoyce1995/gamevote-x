@@ -48,8 +48,3 @@ func (r *BeerRepository) InitTable() error {
 	return err
 }
 
-func (r *BeerRepository) DeleteAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE beers", nil)
-	return err
-}

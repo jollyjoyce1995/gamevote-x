@@ -49,8 +49,3 @@ func (r *VoteRepository) InitTable() error {
 	return err
 }
 
-func (r *VoteRepository) DeleteAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE votes", nil)
-	return err
-}

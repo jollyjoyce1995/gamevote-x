@@ -6,7 +6,6 @@ import (
 	"gamevote-api-go/internal/storage"
 	"log/slog"
 	"math/rand"
-	"time"
 
 	surrealmodels "github.com/surrealdb/surrealdb.go/pkg/models"
 )
@@ -20,7 +19,6 @@ type PartyService struct {
 }
 
 func NewPartyService(partyRepo *storage.PartyRepository, beerRepo *storage.BeerRepository, pollService *PollService, userService *UserService, broker *SSEBroker) *PartyService {
-	rand.Seed(time.Now().UnixNano())
 	return &PartyService{
 		PartyRepo:   partyRepo,
 		BeerRepo:    beerRepo,

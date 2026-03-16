@@ -17,11 +17,22 @@
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { onMounted } from 'vue'
+import { RouterView, useRouter } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
+
+// Validate session on app startup
+onMounted(async () => {
+  const isValid = await authStore.validateSession()
+  // If we're not on the login page and session is invalid, redirect to login
+  if (!isValid && router.currentRoute.value.name !== 'login') {
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+  }
+})
 </script>
 
 <style>

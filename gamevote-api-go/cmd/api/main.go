@@ -65,7 +65,6 @@ func main() {
 
 	// Handlers
 	partyHandler := handler.NewPartyHandler(partyService, broker)
-	//pollHandler := handler.NewPollHandler(pollService)
 	userHandler := handler.NewUserHandler(userService)
 	drinkTypeHandler := handler.NewDrinkTypeHandler(drinkTypeService)
 	gameHandler := handler.NewGameHandler(steamWorker)
@@ -86,6 +85,7 @@ func main() {
 	// User routes
 	router.POST("/users", userHandler.Login)
 	router.GET("/users", userHandler.GetUsers)
+	router.GET("/users/:username", userHandler.ValidateUser)
 
 	// Drink preset routes
 	router.GET("/drinks/presets", drinkTypeHandler.GetDrinkTypes)
@@ -106,12 +106,6 @@ func main() {
 	router.DELETE("/parties/:code/attendees/:attendeeId", partyHandler.DeleteAttendee)
 	router.POST("/parties/:code/beers", partyHandler.PostBeer)
 	router.POST("/parties/:code/votes/:attendee", partyHandler.PostVote)
-
-	// Poll routes
-	/*	router.PUT("/polls/:id", pollHandler.PutPoll)
-		router.GET("/polls/:id/votes", pollHandler.GetVotes)
-		router.GET("/polls/:id/results", pollHandler.GetResults)
-	*/
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

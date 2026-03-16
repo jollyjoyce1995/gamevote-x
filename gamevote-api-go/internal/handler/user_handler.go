@@ -63,3 +63,22 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, users)
 }
+
+// ValidateUser godoc
+// @Summary      Validate if a user exists
+// @Description  Check if a user exists in the database by username
+// @Tags         users
+// @Produce      application/json
+// @Param        username path string true "Username"
+// @Success      200  {object} service.UserDTO
+// @Failure      404  {object} object
+// @Router       /users/{username} [get]
+func (h *UserHandler) ValidateUser(c *gin.Context) {
+	username := c.Param("username")
+	user, err := h.UserService.FindByUsername(username)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}

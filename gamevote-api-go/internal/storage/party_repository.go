@@ -3,8 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-
-	"gamevote-api-go/internal/helpers"
 	"gamevote-api-go/internal/models"
 
 	"log/slog"
@@ -35,13 +33,6 @@ func (r *PartyRepository) Save(party *models.Party) error {
 	return err
 }
 
-func (r *PartyRepository) FindByID(id string) (*models.Party, error) {
-	recordID, err := helpers.ToRecordID(id)
-	if err != nil {
-		return nil, err
-	}
-	return r.FindBySurrealID(*recordID)
-}
 
 func (r *PartyRepository) FindBySurrealID(id surrealmodels.RecordID) (*models.Party, error) {
 	ctx := context.Background()
@@ -104,8 +95,3 @@ func (r *PartyRepository) InitTable() error {
 	return err
 }
 
-func (r *PartyRepository) DeleteAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE parties", nil)
-	return err
-}

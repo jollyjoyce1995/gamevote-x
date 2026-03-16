@@ -52,8 +52,3 @@ func (r *DrinkTypeRepository) InitTable() error {
 	return err
 }
 
-func (r *DrinkTypeRepository) ClearAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE drink_types", nil)
-	return err
-}

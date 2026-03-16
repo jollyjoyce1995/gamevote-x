@@ -20,6 +20,8 @@ export const loginUser = (username: string) =>
     request<{ id: string; username: string }>('POST', '/users', { username })
 export const getUsers = () =>
     request<{ id: string; username: string }[]>('GET', '/users')
+export const validateUser = (username: string) =>
+    request<{ id: string; username: string }>('GET', `/users/${encodeURIComponent(username)}`)
 
 // ── Parties ────────────────────────────────────────────────────────────
 export const getParties = () => request<PartyDTO[]>('GET', '/parties')

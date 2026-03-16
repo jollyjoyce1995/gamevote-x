@@ -34,6 +34,7 @@ func InitDB() error {
 			"user": user,
 			"pass": pass,
 		}
+		slog.Info("Signing in", "user", authData)
 		if _, err = DB.SignIn(context.Background(), authData); err != nil {
 			return fmt.Errorf("failed to signin: %w", err)
 		}

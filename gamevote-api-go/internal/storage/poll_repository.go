@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"gamevote-api-go/internal/models"
 
 	"log/slog"
@@ -31,17 +30,6 @@ func (r *PollRepository) Save(poll *models.Poll) error {
 	return err
 }
 
-func (r *PollRepository) FindAll() ([]models.Poll, error) {
-	ctx := context.Background()
-	res, err := surrealdb.Query[[]models.Poll](ctx, DB, "SELECT * FROM polls", nil)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil || len(*res) == 0 {
-		return []models.Poll{}, nil
-	}
-	return (*res)[0].Result, nil
-}
 
 func (r *PollRepository) FindByPartyIdAndAttendee(partyId surrealmodels.RecordID, attendee surrealmodels.RecordID) (*models.Poll, error) {
 	ctx := context.Background()
@@ -55,17 +43,6 @@ func (r *PollRepository) FindByPartyIdAndAttendee(partyId surrealmodels.RecordID
 	return &(*res)[0].Result[0], nil
 }
 
-func (r *PollRepository) FindByID(id *surrealmodels.RecordID) (*models.Poll, error) {
-	ctx := context.Background()
-	res, err := surrealdb.Select[models.Poll](ctx, DB, *id)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, fmt.Errorf("poll not found")
-	}
-	return res, nil
-}
 
 func (r *PollRepository) FindAllByPartyId(partyId surrealmodels.RecordID) ([]models.Poll, error) {
 	ctx := context.Background()
@@ -120,8 +97,3 @@ func (r *PollRepository) InitTable() error {
 	return err
 }
 
-func (r *PollRepository) DeleteAll() error {
-	ctx := context.Background()
-	_, err := surrealdb.Query[interface{}](ctx, DB, "DELETE polls", nil)
-	return err
-}

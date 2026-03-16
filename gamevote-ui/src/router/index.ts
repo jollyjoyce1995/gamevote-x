@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import Cookies from 'js-cookie'
 
 const router = createRouter({
@@ -41,12 +42,25 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
-  const isAuthenticated = !!Cookies.get('username')
-  if (to.meta.requiresAuth !== false && !isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+router.beforeEach(async (to) => {
+  // Skip validation for login page
+  if (to.name === 'login') {
+    return
   }
-  if (to.name === 'login' && isAuthenticated) {
+
+  // For routes that require auth, validate the session
+  if (to.meta.requiresAuth !== false) {
+    const authStore = useAuthStore()
+    const isValidSession = await authStore.validateSession()
+
+    if (!isValidSession) {
+      return { name: 'login', query: { redirect: to.fullPath } }
+    }
+  }
+
+  // If already authenticated and trying to go to login, redirect to home
+  const hasCookie = !!Cookies.get('username')
+  if (to.name === 'login' && hasCookie) {
     return { name: 'home' }
   }
 })
