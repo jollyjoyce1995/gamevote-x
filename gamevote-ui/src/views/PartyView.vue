@@ -126,7 +126,18 @@ async function advance() {
 // ── Lifecycle ────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    const p = await partiesApi.partiesCodeGet({ code: code.value })
+    let p = await partiesApi.partiesCodeGet({ code: code.value })
+    
+    // Auto-join logic
+    if (authStore.username && (!p.attendees || !p.attendees.includes(authStore.username))) {
+      await partiesApi.partiesCodeAttendeesPost({
+        code: code.value,
+        value: { value: authStore.username }
+      })
+      // re-fetch party to get the updated attendees list immediately
+      p = await partiesApi.partiesCodeGet({ code: code.value })
+    }
+
     partyStore.setParty(p)
     connectSSE()
   } catch (e: any) {

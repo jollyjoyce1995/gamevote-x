@@ -48,11 +48,13 @@ const party = computed(() => partyStore.party)
 const currentVotes = ref<Record<string, number>>({})
 const submittingVote = ref(false)
 
-const outstanding = computed(() => party.value?.outstandingVoters || [])
+const outstanding = computed(() => {
+  return party.value?.outstandingVoters?.filter(x => x != authStore.username) || []
+})
 const alreadyVoted = computed(() => {
   if (party.value?.status !== 'VOTING') return false
   if (!authStore.username) return false
-  return !outstanding.value.includes(authStore.username)
+  return !party.value?.outstandingVoters?.includes(authStore.username)
 })
 
 function vote(name: string, like: number) {
