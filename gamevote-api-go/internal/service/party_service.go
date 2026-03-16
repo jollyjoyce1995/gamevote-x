@@ -132,41 +132,18 @@ func (s *PartyService) PatchParty(code string, toStatus models.PartyStatus) (*mo
 	}
 
 	if toStatus == models.PartyStatusVoting || toStatus == models.PartyStatusNomination {
-		/*		s.PartyRepo.UpdateParty(party)
-				if party.PollID != "" {
-					poll, err := s.PollService.GetPoll(party.PollID)
-					if err == nil {
-						poll.Status = models.PollStatusCompleted
-						s.PollService.UpdatePoll(poll)
-					}
-					party.PollID = ""
-					party.Results = map[string]int{}
-				}*/
+		// Nothing to calculate if transitioning here for now
 	}
 
 	if toStatus == models.PartyStatusVoting {
-		/*		poll := &models.Poll{
-					Options:   party.Options,
-					Attendees: party.Attendees,
-				}
-				createdPoll, err := s.PollService.Create(poll)
-				if err != nil {
-					return nil, err
-				}
-				party.PollID = createdPoll.ID
-		*/
+		// Can initialize things for voting here if requested later
 	} else if toStatus == models.PartyStatusResults {
-		/*		if party.PollID != "" {
-				poll, err := s.PollService.GetPoll(party.PollID)
-				if err == nil {
-					results, err := s.PollService.GetResults(poll.ID)
-					if err == nil {
-						party.Results = results
-					}
-					poll.Status = models.PollStatusCompleted
-					s.PollService.UpdatePoll(poll)
-				}
-			}*/
+		results, err := s.PollService.GetResultsByPartyId(*party.ID)
+		if err == nil {
+			party.Results = results
+		} else {
+			slog.Error("Failed to calculate results", "error", err)
+		}
 	}
 
 	party.Status = toStatus
@@ -315,10 +292,24 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 		}
 	}
 
-	// Broadcast updated state
+	// Broadcast updated state or try to auto-advance
 	if s.Broker != nil {
 		dto, _ := s.ToDTO(party)
-		s.Broker.Broadcast(party.Code, "party_updated", dto)
+		
+		if party.Status == models.PartyStatusVoting && len(dto.OutstandingVoters) == 0 {
+			// Auto transition
+			slog.Info("All voters have cast their votes, transitioning to RESULTS", "code", party.Code)
+			updatedParty, err := s.PatchParty(party.Code, models.PartyStatusResults)
+			if err == nil {
+				updatedDto, _ := s.ToDTO(updatedParty)
+				s.Broker.Broadcast(party.Code, "party_updated", updatedDto)
+			} else {
+				// Broadcast normally if patch failed for some reason
+				s.Broker.Broadcast(party.Code, "party_updated", dto)
+			}
+		} else {
+			s.Broker.Broadcast(party.Code, "party_updated", dto)
+		}
 	}
 	return nil
 }

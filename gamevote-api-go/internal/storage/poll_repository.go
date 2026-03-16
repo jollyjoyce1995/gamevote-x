@@ -67,6 +67,18 @@ func (r *PollRepository) FindByID(id *surrealmodels.RecordID) (*models.Poll, err
 	return res, nil
 }
 
+func (r *PollRepository) FindAllByPartyId(partyId surrealmodels.RecordID) ([]models.Poll, error) {
+	ctx := context.Background()
+	res, err := surrealdb.Query[[]models.Poll](ctx, DB, "SELECT * FROM polls WHERE party = $partyId", map[string]interface{}{"partyId": partyId})
+	if err != nil {
+		return nil, err
+	}
+	if res == nil || len(*res) == 0 {
+		return []models.Poll{}, nil
+	}
+	return (*res)[0].Result, nil
+}
+
 type VotedUsernameResult struct {
 	Username string `json:"username"`
 }
