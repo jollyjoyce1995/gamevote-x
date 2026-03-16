@@ -67,6 +67,34 @@ func (r *PollRepository) FindByID(id *surrealmodels.RecordID) (*models.Poll, err
 	return res, nil
 }
 
+type VotedUsernameResult struct {
+	Username string `json:"username"`
+}
+
+func (r *PollRepository) FindVotedUsernamesByPartyId(partyId surrealmodels.RecordID) ([]string, error) {
+	ctx := context.Background()
+	query := "SELECT attendee.username AS username FROM polls WHERE party = $partyId AND status = 'COMPLETED'"
+	
+	// Assuming that when a vote is submitted it might just be UPSERTED without necessarily checking "COMPLETED" status
+	// Looking at AddPoll, it sets status to IN_PROGRESS. We'll simply check for existance of a poll for now.
+	query = "SELECT attendee.username AS username FROM polls WHERE party = $partyId"
+
+	res, err := surrealdb.Query[[]VotedUsernameResult](ctx, DB, query, map[string]interface{}{"partyId": partyId})
+	if err != nil {
+		return nil, err
+	}
+	if res == nil || len(*res) == 0 {
+		return []string{}, nil
+	}
+
+	usernames := make([]string, 0, len((*res)[0].Result))
+	for _, row := range (*res)[0].Result {
+		usernames = append(usernames, row.Username)
+	}
+
+	return usernames, nil
+}
+
 func (r *PollRepository) InitTable() error {
 	ctx := context.Background()
 	query := `

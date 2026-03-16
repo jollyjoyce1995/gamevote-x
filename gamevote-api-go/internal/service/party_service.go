@@ -314,6 +314,12 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 			return err
 		}
 	}
+
+	// Broadcast updated state
+	if s.Broker != nil {
+		dto, _ := s.ToDTO(party)
+		s.Broker.Broadcast(party.Code, "party_updated", dto)
+	}
 	return nil
 }
 
@@ -348,15 +354,16 @@ func (s *PartyService) PostBeer(code string, attendee string) error {
 
 // Helper models for the responses
 type PartyDTO struct {
-	ID              string               `json:"id"`
-	Attendees       []string             `json:"attendees"`
-	Options         []models.PartyOption `json:"options"`
-	Status          string               `json:"status"`
-	Results         map[string]int       `json:"results,omitempty"`
-	Code            string               `json:"code,omitempty"`
-	Links           map[string]Link      `json:"_links"`
-	BeerCount       int                  `json:"beerCount"`
-	BeerPerAttendee map[string]int       `json:"beerPerAttendee"`
+	ID                string               `json:"id"`
+	Attendees         []string             `json:"attendees"`
+	Options           []models.PartyOption `json:"options"`
+	Status            string               `json:"status"`
+	Results           map[string]int       `json:"results,omitempty"`
+	Code              string               `json:"code,omitempty"`
+	Links             map[string]Link      `json:"_links"`
+	BeerCount         int                  `json:"beerCount"`
+	BeerPerAttendee   map[string]int       `json:"beerPerAttendee"`
+	OutstandingVoters []string             `json:"outstandingVoters,omitempty"`
 }
 
 type Link struct {
@@ -380,15 +387,37 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		beerPerAttendee[a] = count
 	}
 
+	var outstandingVoters []string
+	if party.Status == models.PartyStatusVoting {
+		votedUsers, err := s.PollService.GetVotedUsernamesByPartyId(*party.ID)
+		slog.Info("Getting voted users", "votedUsers", votedUsers, "err", err)
+		if err == nil {
+			votedMap := make(map[string]bool)
+			for _, u := range votedUsers {
+				votedMap[u] = true
+			}
+			slog.Info("votedMap", "votedMap", votedMap)
+			for _, attendee := range party.Attendees {
+				slog.Info("Checking if attendee is voted", "attendee", attendee, "votedMap", votedMap)
+				if !votedMap[attendee] {
+					slog.Info("Adding to outstanding voters", "attendee", attendee)
+					outstandingVoters = append(outstandingVoters, attendee)
+				}
+			}
+		}
+	}
+
+	slog.Info("Converting party to DTO", "outstandingVoters", outstandingVoters)
 	return &PartyDTO{
-		ID:              party.ID.String(),
-		Attendees:       party.Attendees,
-		Options:         party.Options,
-		Status:          string(party.Status),
-		Results:         party.Results,
-		Code:            party.Code,
-		BeerCount:       len(beers),
-		BeerPerAttendee: beerPerAttendee,
+		ID:                party.ID.String(),
+		Attendees:         party.Attendees,
+		Options:           party.Options,
+		Status:            string(party.Status),
+		Results:           party.Results,
+		Code:              party.Code,
+		BeerCount:         len(beers),
+		BeerPerAttendee:   beerPerAttendee,
+		OutstandingVoters: outstandingVoters,
 	}, nil
 }
 

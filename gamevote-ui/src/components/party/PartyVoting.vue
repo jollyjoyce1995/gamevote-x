@@ -47,8 +47,13 @@ const party = computed(() => partyStore.party)
 
 const currentVotes = ref<Record<string, number>>({})
 const submittingVote = ref(false)
-const alreadyVoted = ref(false)
-const outstanding = ref<string[]>([])
+
+const outstanding = computed(() => party.value?.outstandingVoters || [])
+const alreadyVoted = computed(() => {
+  if (party.value?.status !== 'VOTING') return false
+  if (!authStore.username) return false
+  return !outstanding.value.includes(authStore.username)
+})
 
 function vote(name: string, like: number) {
   currentVotes.value[name] = like;
@@ -66,32 +71,16 @@ async function submitVotes() {
       attendee: authStore.username,
       choices: currentVotes.value,
     })
-    alreadyVoted.value = true
-    await loadOutstanding()
+    // No need to loadOutstanding manually. The SSE event `party_updated` 
+    // will push the updated outstandingVoters list instantly.
   } finally {
     submittingVote.value = false
   }
 }
 
-async function loadOutstanding() {
-  const pollId = party.value?.links?.['poll']?.href?.split('/').pop()
-  if (!pollId) return
-  outstanding.value = await pollsApi.pollsIdOutstandingGet({id: pollId}).catch(() => [])
-  if (!outstanding.value.includes(authStore.username!)) {
-    alreadyVoted.value = true
-  }
-}
-onMounted(() => {
-  if (party.value?.status === 'VOTING') {
-    loadOutstanding()
-  }
-})
-
 watch(() => party.value?.status, (newStatus) => {
   if (newStatus === 'VOTING') {
-    alreadyVoted.value = false
     currentVotes.value = {}
-    loadOutstanding()
   }
 })
 </script>

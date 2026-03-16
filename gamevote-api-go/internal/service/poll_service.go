@@ -35,6 +35,10 @@ func (s *PollService) GetPollsByPartyIdAndAttendee(id surrealmodels.RecordID, at
 	return s.PollRepo.FindByPartyIdAndAttendee(id, attendee)
 }
 
+func (s *PollService) GetVotedUsernamesByPartyId(partyId surrealmodels.RecordID) ([]string, error) {
+	return s.PollRepo.FindVotedUsernamesByPartyId(partyId)
+}
+
 func (s *PollService) UpdatePoll(poll *models.Poll) (*models.Poll, error) {
 	currentPoll, err := s.PollRepo.FindByID(poll.ID)
 	if err != nil {
