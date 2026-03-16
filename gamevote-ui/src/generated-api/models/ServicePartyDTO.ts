@@ -88,12 +88,6 @@ export interface ServicePartyDTO {
      * @memberof ServicePartyDTO
      */
     status?: string;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ServicePartyDTO
-     */
-    outstandingVoters?: Array<string>;
 }
 
 /**
@@ -122,7 +116,6 @@ export function ServicePartyDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
         'options': json['options'] == null ? undefined : ((json['options'] as Array<any>).map(ModelsPartyOptionFromJSON)),
         'results': json['results'] == null ? undefined : json['results'],
         'status': json['status'] == null ? undefined : json['status'],
-        'outstandingVoters': json['outstandingVoters'] == null ? undefined : json['outstandingVoters'],
     };
 }
 
@@ -146,7 +139,5 @@ export function ServicePartyDTOToJSONTyped(value?: ServicePartyDTO | null, ignor
         'options': value['options'] == null ? undefined : ((value['options'] as Array<any>).map(ModelsPartyOptionToJSON)),
         'results': value['results'],
         'status': value['status'],
-        'outstandingVoters': value['outstandingVoters'],
     };
 }
-

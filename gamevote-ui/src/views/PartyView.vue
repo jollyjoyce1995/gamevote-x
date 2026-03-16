@@ -102,6 +102,10 @@ function connectSSE() {
     partyStore.setOnlineUsers(JSON.parse(e.data) as string[])
   })
 
+  es.addEventListener('outstanding_voters_updated', (e: MessageEvent) => {
+    partyStore.setOutstandingVoters(JSON.parse(e.data) as string[])
+  })
+
   es.onerror = () => {
     // quietly ignore – EventSource will reconnect
   }

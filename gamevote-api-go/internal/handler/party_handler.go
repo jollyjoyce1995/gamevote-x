@@ -78,6 +78,14 @@ func (h *PartyHandler) StreamParty(c *gin.Context) {
 		c.Writer.Flush()
 	}
 
+	// Send initial outstanding voters if applicable
+	domainParty, err := h.PartyService.PartyRepo.FindByCode(code)
+	if err == nil && domainParty.Status == models.PartyStatusVoting {
+		outstanding := h.PartyService.GetOutstandingVoters(domainParty)
+		c.SSEvent("outstanding_voters_updated", outstanding)
+		c.Writer.Flush()
+	}
+
 	slog.Info("Client connected to SSE", "code", code, "username", username)
 
 	ctx := c.Request.Context()

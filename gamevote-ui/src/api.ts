@@ -78,7 +78,6 @@ export interface PartyDTO {
     status: 'NOMINATION' | 'VOTING' | 'RESULTS'
     beerCount: number
     beerPerAttendee: Record<string, number>
-    outstandingVoters?: string[]
     _links?: Record<string, { href: string }>
 }
 

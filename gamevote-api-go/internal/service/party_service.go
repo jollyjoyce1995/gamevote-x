@@ -137,6 +137,7 @@ func (s *PartyService) PatchParty(code string, toStatus models.PartyStatus) (*mo
 
 	if toStatus == models.PartyStatusVoting {
 		// Can initialize things for voting here if requested later
+		s.BroadcastOutstandingVoters(party)
 	} else if toStatus == models.PartyStatusResults {
 		results, err := s.PollService.GetResultsByPartyId(*party.ID)
 		if err == nil {
@@ -296,7 +297,9 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 	if s.Broker != nil {
 		dto, _ := s.ToDTO(party)
 		
-		if party.Status == models.PartyStatusVoting && len(dto.OutstandingVoters) == 0 {
+		outstanding := s.GetOutstandingVoters(party)
+		
+		if party.Status == models.PartyStatusVoting && len(outstanding) == 0 {
 			// Auto transition
 			slog.Info("All voters have cast their votes, transitioning to RESULTS", "code", party.Code)
 			updatedParty, err := s.PatchParty(party.Code, models.PartyStatusResults)
@@ -306,9 +309,12 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 			} else {
 				// Broadcast normally if patch failed for some reason
 				s.Broker.Broadcast(party.Code, "party_updated", dto)
+				s.Broker.Broadcast(party.Code, "outstanding_voters_updated", outstanding)
 			}
 		} else {
 			s.Broker.Broadcast(party.Code, "party_updated", dto)
+			// Also broadcast outstanding voters
+			s.Broker.Broadcast(party.Code, "outstanding_voters_updated", outstanding)
 		}
 	}
 	return nil
@@ -354,7 +360,6 @@ type PartyDTO struct {
 	Links             map[string]Link      `json:"_links"`
 	BeerCount         int                  `json:"beerCount"`
 	BeerPerAttendee   map[string]int       `json:"beerPerAttendee"`
-	OutstandingVoters []string             `json:"outstandingVoters,omitempty"`
 }
 
 type Link struct {
@@ -378,27 +383,7 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		beerPerAttendee[a] = count
 	}
 
-	var outstandingVoters []string
-	if party.Status == models.PartyStatusVoting {
-		votedUsers, err := s.PollService.GetVotedUsernamesByPartyId(*party.ID)
-		slog.Info("Getting voted users", "votedUsers", votedUsers, "err", err)
-		if err == nil {
-			votedMap := make(map[string]bool)
-			for _, u := range votedUsers {
-				votedMap[u] = true
-			}
-			slog.Info("votedMap", "votedMap", votedMap)
-			for _, attendee := range party.Attendees {
-				slog.Info("Checking if attendee is voted", "attendee", attendee, "votedMap", votedMap)
-				if !votedMap[attendee] {
-					slog.Info("Adding to outstanding voters", "attendee", attendee)
-					outstandingVoters = append(outstandingVoters, attendee)
-				}
-			}
-		}
-	}
-
-	slog.Info("Converting party to DTO", "outstandingVoters", outstandingVoters)
+	slog.Info("Converting party to DTO")
 	return &PartyDTO{
 		ID:                party.ID.String(),
 		Attendees:         party.Attendees,
@@ -408,8 +393,33 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		Code:              party.Code,
 		BeerCount:         len(beers),
 		BeerPerAttendee:   beerPerAttendee,
-		OutstandingVoters: outstandingVoters,
 	}, nil
+}
+
+func (s *PartyService) GetOutstandingVoters(party *models.Party) []string {
+	var outstandingVoters []string
+	if party.Status == models.PartyStatusVoting {
+		votedUsers, err := s.PollService.GetVotedUsernamesByPartyId(*party.ID)
+		if err == nil {
+			votedMap := make(map[string]bool)
+			for _, u := range votedUsers {
+				votedMap[u] = true
+			}
+			for _, attendee := range party.Attendees {
+				if !votedMap[attendee] {
+					outstandingVoters = append(outstandingVoters, attendee)
+				}
+			}
+		}
+	}
+	return outstandingVoters
+}
+
+func (s *PartyService) BroadcastOutstandingVoters(party *models.Party) {
+	if s.Broker != nil && party.Status == models.PartyStatusVoting {
+		outstanding := s.GetOutstandingVoters(party)
+		s.Broker.Broadcast(party.Code, "outstanding_voters_updated", outstanding)
+	}
 }
 
 func (s *PartyService) ToDomain(dto *PartyDTO) (*models.Party, error) {
