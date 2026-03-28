@@ -42,7 +42,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getParties, type PartyDTO } from '@/api'
+import { getParties } from '@/api-client'
+import type { ServicePartyDto as PartyDTO } from '@/generated-api'
 import PartyCard from '@/components/PartyCard.vue'
 
 const parties = ref<PartyDTO[]>([])
@@ -50,7 +51,8 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    parties.value = await getParties()
+    const res = await getParties()
+    parties.value = res.data as PartyDTO[]
   } finally {
     loading.value = false
   }

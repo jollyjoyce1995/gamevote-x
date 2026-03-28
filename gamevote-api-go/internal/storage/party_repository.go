@@ -33,7 +33,6 @@ func (r *PartyRepository) Save(party *models.Party) error {
 	return err
 }
 
-
 func (r *PartyRepository) FindBySurrealID(id surrealmodels.RecordID) (*models.Party, error) {
 	ctx := context.Background()
 	res, err := surrealdb.Select[models.Party](ctx, DB, id)
@@ -88,10 +87,8 @@ func (r *PartyRepository) InitTable() error {
 		DEFINE FIELD IF NOT EXISTS attendees ON TABLE parties TYPE array<string>;
 		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: option<int>, imageUrl: option<string>}>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
-		DEFINE FIELD IF NOT EXISTS results ON TABLE parties TYPE option<object>;
 	`
 	slog.Debug("Initializing parties table")
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err
 }
-

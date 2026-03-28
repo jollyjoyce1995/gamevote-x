@@ -31,7 +31,7 @@
               :title="`≈ ${dt.beerEquivalent} beer`"
               @click="logDrink(dt)"
             >
-              {{ drinkEmoji(dt.name) }} {{ dt.name }}<br />
+              {{ drinkEmoji(dt.name || '') }} {{ dt.name }}<br />
               <span class="text-xs font-normal opacity-60">{{ dt.unitName }}</span>
             </button>
           </div>
@@ -93,7 +93,8 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { getParty, getDrinkPresets, postDrinkPreset, postBeer, type DrinkType, type PartyDTO } from '@/api'
+import { getParty, getDrinkTypes, postDrinkType, postBeer } from '@/api-client'
+import type { ModelsDrinkType as DrinkType, ServicePartyDto as PartyDTO } from '@/generated-api'
 import { Chart, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, BarController, LineController } from 'chart.js'
 Chart.register(BarElement, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, BarController, LineController)
 
@@ -130,11 +131,11 @@ function drinkEmoji(name: string) {
 async function logDrink(dt: DrinkType) {
   const attendee = selectedAttendee.value
   if (!attendee) return
-  await postBeer(code.value, attendee).catch(() => {})
+  await postBeer({ path: { code: code.value }, body: { attendee } }).catch(() => {})
   log.value.push({
     attendee,
-    name: dt.name,
-    beers: dt.beerEquivalent,
+    name: dt.name || 'Unknown',
+    beers: dt.beerEquivalent || 0,
     time: new Date().toLocaleTimeString(),
     ts: Date.now(),
   })
@@ -153,7 +154,8 @@ async function addCustomDrink() {
     beerEquivalent: beerEq,
     unitName: custom.value.unitName,
   }
-  const saved = await postDrinkPreset(newDt).catch(() => ({ ...newDt, id: Date.now().toString() }))
+  const savedResp = await postDrinkType({ body: newDt as any }).catch(() => ({ data: { ...newDt, id: Date.now().toString() } }))
+  const saved = savedResp.data as DrinkType
   presets.value.push(saved)
   await logDrink(saved)
   custom.value = { name: '', volumeMl: 500, alcoholPercent: 5, unitName: 'custom' }
@@ -238,23 +240,25 @@ function renderCharts() {
 }
 
 onMounted(async () => {
-  const [p, dts] = await Promise.all([
-    getParty(code.value).catch(() => null),
-    getDrinkPresets().catch(() => [] as DrinkType[])
+  const [pResp, dtsResp] = await Promise.all([
+    getParty({ path: { code: code.value } }).catch(() => null),
+    getDrinkTypes().catch(() => ({ data: [] }))
   ])
+  const p = pResp?.data
   if (p) {
-    party.value = p
-    if (!selectedAttendee.value && p.attendees.length) {
+    party.value = p as PartyDTO
+    if (!selectedAttendee.value && p.attendees?.length) {
       selectedAttendee.value = p.attendees[0] as string
     }
     // Prefill log from beer counts (without time)
-    for (const [attendee, count] of Object.entries(p.beerPerAttendee)) {
+    for (const [attendee, count] of Object.entries(p.beerPerAttendee || {})) {
       for (let i = 0; i < count; i++) {
         log.value.push({ attendee, name: 'Beer', beers: 1, time: '?', ts: 0 })
       }
     }
   }
-  presets.value = dts
+  presets.value = dtsResp?.data as DrinkType[] || []
+  loadingPresets.value = false
   loadingPresets.value = false
   await nextTick()
   renderCharts()

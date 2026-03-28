@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { ServicePartyDTO as PartyDTO } from '@/generated-api'
+import type { ServicePartyDto as PartyDTO } from '@/generated-api'
 
 export const usePartyStore = defineStore('party', () => {
     const party = ref<PartyDTO | null>(null)

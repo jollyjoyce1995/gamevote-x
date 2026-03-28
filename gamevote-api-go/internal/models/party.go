@@ -22,5 +22,4 @@ type Party struct {
 	Attendees []string         `json:"attendees" surreal:"attendees"`
 	Options   []PartyOption    `json:"options" surreal:"options"`
 	Status    PartyStatus      `json:"status" surreal:"status"`
-	Results   map[string]int   `json:"results,omitempty" surreal:"results"`
 }

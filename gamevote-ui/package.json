@@ -8,9 +8,11 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "generate": "npx openapi-ts"
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.13.1",
     "@tailwindcss/vite": "^4.2.1",
     "@types/js-cookie": "^3.0.6",
     "chart.js": "^4.5.1",
@@ -21,6 +23,7 @@
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.94.5",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.11.0",
     "@vitejs/plugin-vue": "^6.0.4",

@@ -1,8 +1,8 @@
-import { Configuration, PartiesApi } from './generated-api'
+import { client } from './generated-api/client.gen'
 
-const config = new Configuration({
-    basePath: 'http://localhost:8080',
-    // You can add middleware here for auth if needed
+client.setConfig({
+    baseUrl: 'http://localhost:8080',
 })
 
-export const partiesApi = new PartiesApi(config)
+export * from './generated-api'
+export { client }

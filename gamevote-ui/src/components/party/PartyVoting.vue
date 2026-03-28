@@ -37,7 +37,7 @@
 import {ref, computed, onMounted, watch} from 'vue'
 import {useAuthStore} from '@/stores/auth'
 import {usePartyStore} from '@/stores/party'
-import {partiesApi} from '@/api-client'
+import {postVote} from '@/api-client'
 import GameItem from "@/components/party/GameItem.vue";
 
 const authStore = useAuthStore()
@@ -49,11 +49,15 @@ const currentVotes = ref<Record<string, number>>({})
 const submittingVote = ref(false)
 
 const outstanding = computed(() => {
-  return partyStore.outstandingVoters?.filter(x => x != authStore.username) || []
+  return partyStore.outstandingVoters?.filter(x => x !== authStore.username) || []
 })
 const alreadyVoted = computed(() => {
-  if (party.value?.status !== 'VOTING') return false
-  if (!authStore.username) return false
+  if (party.value?.status !== 'VOTING') {
+    return false
+  }
+  if (!authStore.username) {
+    return false
+  }
   return !partyStore.outstandingVoters?.includes(authStore.username)
 })
 
@@ -64,14 +68,13 @@ function vote(name: string, like: number) {
 async function submitVotes() {
   if (!authStore.username) return
   submittingVote.value = true
-  if(!party.value?.code){
+  if (!party.value?.code) {
     return
   }
   try {
-    await partiesApi.postVote({
-      code: party.value.code,
-      attendee: authStore.username,
-      choices: currentVotes.value,
+    await postVote({
+      path: {code: party.value.code, attendee: authStore.username},
+      body: currentVotes.value
     })
     // No need to loadOutstanding manually. The SSE event `party_updated` 
     // will push the updated outstandingVoters list instantly.

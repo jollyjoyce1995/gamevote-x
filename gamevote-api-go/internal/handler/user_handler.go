@@ -29,6 +29,7 @@ type UserLoginRequest struct {
 // @Produce      application/json
 // @Param        req body UserLoginRequest true "Login Request"
 // @Success      200 {object} service.UserDTO
+// @ID           Login
 // @Router       /users [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req UserLoginRequest
@@ -54,6 +55,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Tags         users
 // @Produce      application/json
 // @Success      200  {array} service.UserDTO
+// @ID           GetUsers
 // @Router       /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	users, err := h.UserService.FindAll()
@@ -72,6 +74,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Param        username path string true "Username"
 // @Success      200  {object} service.UserDTO
 // @Failure      404  {object} object
+// @ID           ValidateUser
 // @Router       /users/{username} [get]
 func (h *UserHandler) ValidateUser(c *gin.Context) {
 	username := c.Param("username")

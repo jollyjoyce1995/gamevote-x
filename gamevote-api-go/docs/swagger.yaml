@@ -115,6 +115,7 @@ paths:
   /drinks/presets:
     get:
       description: Get a list of all preset drinks
+      operationId: GetDrinkTypes
       produces:
       - application/json
       responses:
@@ -131,6 +132,7 @@ paths:
       consumes:
       - application/json
       description: Create a new custom drink preset saving it to the database
+      operationId: PostDrinkType
       parameters:
       - description: Drink Type Details
         in: body
@@ -151,6 +153,7 @@ paths:
   /games:
     get:
       description: Search the cached Steam game list by name
+      operationId: SearchGames
       parameters:
       - description: Search Query
         in: query
@@ -172,6 +175,7 @@ paths:
   /parties:
     get:
       description: Get all parties ordered by ID
+      operationId: GetParties
       produces:
       - application/json
       responses:
@@ -188,6 +192,7 @@ paths:
       consumes:
       - application/json
       description: Creates a new party with a generated 6-character code
+      operationId: CreateParty
       parameters:
       - description: Party details
         in: body
@@ -208,6 +213,7 @@ paths:
   /parties/{code}:
     get:
       description: Get a party by its code
+      operationId: GetParty
       parameters:
       - description: Party Code
         in: path
@@ -228,6 +234,7 @@ paths:
       consumes:
       - application/json
       description: Update a party status
+      operationId: PatchParty
       parameters:
       - description: Party Code
         in: path
@@ -255,6 +262,7 @@ paths:
       consumes:
       - application/json
       description: Add an attendee to a party
+      operationId: PostAttendee
       parameters:
       - description: Party Code
         in: path
@@ -280,6 +288,7 @@ paths:
   /parties/{code}/attendees/{attendeeId}:
     delete:
       description: Delete an attendee from a party by index
+      operationId: DeleteAttendee
       parameters:
       - description: Party Code
         in: path
@@ -302,6 +311,7 @@ paths:
       consumes:
       - application/json
       description: Add a beer for an attendee in a party
+      operationId: PostBeer
       parameters:
       - description: Party Code
         in: path
@@ -327,6 +337,7 @@ paths:
       consumes:
       - application/json
       description: Add an option to a party
+      operationId: PostOption
       parameters:
       - description: Party Code
         in: path
@@ -352,6 +363,7 @@ paths:
   /parties/{code}/options/{gameName}:
     delete:
       description: Delete an option from a party by its name
+      operationId: DeleteOption
       parameters:
       - description: Party Code
         in: path
@@ -372,6 +384,7 @@ paths:
   /parties/{code}/stream:
     get:
       description: Opens a Server-Sent Events stream for real-time party updates
+      operationId: StreamParty
       parameters:
       - description: Party Code
         in: path
@@ -429,6 +442,7 @@ paths:
   /users:
     get:
       description: Returns a list of all registered users.
+      operationId: GetUsers
       produces:
       - application/json
       responses:
@@ -445,6 +459,7 @@ paths:
       consumes:
       - application/json
       description: Logs in a user by username. If they do not exist, they are created.
+      operationId: Login
       parameters:
       - description: Login Request
         in: body
@@ -460,6 +475,30 @@ paths:
           schema:
             $ref: '#/definitions/service.UserDTO'
       summary: Login or Register a User
+      tags:
+      - users
+  /users/{username}:
+    get:
+      description: Check if a user exists in the database by username
+      operationId: ValidateUser
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.UserDTO'
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      summary: Validate if a user exists
       tags:
       - users
 swagger: "2.0"

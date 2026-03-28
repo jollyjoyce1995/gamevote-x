@@ -28,6 +28,7 @@ func NewPartyHandler(partyService *service.PartyService, broker *service.SSEBrok
 // @Tags         parties
 // @Produce application/json
 // @Success      200  {array}  service.PartyDTO
+// @ID           GetParties
 // @Router       /parties [get]
 func (h *PartyHandler) GetParties(c *gin.Context) {
 	dto, err := h.PartyService.GetParties()
@@ -48,6 +49,7 @@ func (h *PartyHandler) GetParties(c *gin.Context) {
 // @Param code path string true "Party Code"
 // @Param username query string true "Username of the connected client"
 // @Success	200 {object} string
+// @ID           StreamParty
 // @Router       /parties/{code}/stream [get]
 func (h *PartyHandler) StreamParty(c *gin.Context) {
 	code := c.Param("code")
@@ -114,6 +116,7 @@ func (h *PartyHandler) StreamParty(c *gin.Context) {
 // @Produce      application/json
 // @Param        party body service.PartyDTO true "Party details"
 // @Success      200  {object}  service.PartyDTO
+// @ID           CreateParty
 // @Router       /parties [post]
 func (h *PartyHandler) CreateParty(c *gin.Context) {
 	var party service.PartyDTO
@@ -154,6 +157,7 @@ func (h *PartyHandler) CreateParty(c *gin.Context) {
 // @Produce application/json
 // @Param code path string true "Party Code"
 // @Success 200 {object} service.PartyDTO
+// @ID           GetParty
 // @Router /parties/{code} [get]
 func (h *PartyHandler) GetParty(c *gin.Context) {
 	code := c.Param("code")
@@ -180,6 +184,7 @@ type StringValue struct {
 // @Param        code path string true "Party Code"
 // @Param        option body models.PartyOption true "Option Details"
 // @Success      200  {object}  models.PartyOption
+// @ID           PostOption
 // @Router       /parties/{code}/options [post]
 func (h *PartyHandler) PostOption(c *gin.Context) {
 	code := c.Param("code")
@@ -208,6 +213,7 @@ func (h *PartyHandler) PostOption(c *gin.Context) {
 // @Param code path string true "Party Code"
 // @Param gameName path string true "Game Name"
 // @Success 200
+// @ID           DeleteOption
 // @Router /parties/{code}/options/{gameName} [delete]
 func (h *PartyHandler) DeleteOption(c *gin.Context) {
 	code := c.Param("code")
@@ -233,6 +239,7 @@ func (h *PartyHandler) DeleteOption(c *gin.Context) {
 // @Param        code path string true "Party Code"
 // @Param        value body StringValue true "Attendee Name"
 // @Success      200 {object} StringValue
+// @ID           PostAttendee
 // @Router       /parties/{code}/attendees [post]
 func (h *PartyHandler) PostAttendee(c *gin.Context) {
 	code := c.Param("code")
@@ -258,6 +265,7 @@ func (h *PartyHandler) PostAttendee(c *gin.Context) {
 // @Param        code path string true "Party Code"
 // @Param        attendeeId path int true "Attendee Index"
 // @Success      200
+// @ID           DeleteAttendee
 // @Router       /parties/{code}/attendees/{attendeeId} [delete]
 func (h *PartyHandler) DeleteAttendee(c *gin.Context) {
 	code := c.Param("code")
@@ -291,7 +299,8 @@ type PatchPartyRequest struct {
 // @Produce      application/json
 // @Param        code path string true "Party Code"
 // @Param        patchReq body PatchPartyRequest true "Patch Request"
-// @Success      200  {object}  service.PartyDTO
+// @Success      200 {object} service.PartyDTO
+// @ID           PatchParty
 // @Router       /parties/{code} [patch]
 func (h *PartyHandler) PatchParty(c *gin.Context) {
 	code := c.Param("code")
@@ -365,6 +374,7 @@ type BeerDTO struct {
 // @Param        code path string true "Party Code"
 // @Param        beer body BeerDTO true "Beer Details"
 // @Success      200
+// @ID           PostBeer
 // @Router       /parties/{code}/beers [post]
 func (h *PartyHandler) PostBeer(c *gin.Context) {
 	code := c.Param("code")

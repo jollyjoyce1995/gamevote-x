@@ -24,6 +24,7 @@ func NewGameHandler(steamWorker *service.SteamWorker) *GameHandler {
 // @Produce      json
 // @Param        q query string true "Search Query"
 // @Success      200  {array}  models.Game
+// @ID           SearchGames
 // @Router       /games [get]
 func (h *GameHandler) SearchGames(c *gin.Context) {
 	q := c.Query("q")

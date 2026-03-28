@@ -48,9 +48,9 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePartyStore } from '@/stores/party'
-import { searchGames, type Game } from '@/api'
-import { partiesApi } from '@/api-client'
+import { searchGames, postOption, deleteOption } from '@/api-client'
 import GameItem from '@/components/party/GameItem.vue'
+import type {ModelsGame} from "@/generated-api";
 
 const route = useRoute()
 const partyStore = usePartyStore()
@@ -59,22 +59,24 @@ const code = computed(() => route.params.code as string)
 const party = computed(() => partyStore.party)
 
 const gameSearch = ref('')
-const suggestions = ref<Game[]>([])
+const suggestions = ref<ModelsGame[]>([])
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 function onSearchInput() {
   if (searchTimeout) clearTimeout(searchTimeout)
   if (!gameSearch.value.trim()) { suggestions.value = []; return }
   searchTimeout = setTimeout(async () => {
-    suggestions.value = await searchGames(gameSearch.value).catch(() => [])
+    const res = await searchGames({ query: { q: gameSearch.value } }).catch(() => null)
+    suggestions.value = res?.data || []
   }, 300)
 }
 
-async function pickGame(item: Game | string) {
+async function pickGame(item: ModelsGame | string) {
   const name = typeof item === 'string' ? item.trim() : item.name
   if (!name) return
 
-  if (party.value?.options?.some(opt => opt.name?.toLowerCase() === name.toLowerCase())) {
+  const exists = partyStore.party!.options?.some((opt: any) => opt.name?.toLowerCase() === name.toLowerCase())
+  if (exists) {
     alert('This game is already nominated!')
     return
   }
@@ -87,9 +89,9 @@ async function pickGame(item: Game | string) {
   suggestions.value = []
   
   try {
-    await partiesApi.partiesCodeOptionsPost({
-      code: code.value,
-      option: option
+    await postOption({
+      path: { code: code.value },
+      body: option
     })
   } catch (e) {
     console.error('Failed to nominate:', e)
@@ -105,9 +107,8 @@ async function submitCustomGame() {
 async function removeOption(name: string) {
   if (!name) return
 
-  await partiesApi.partiesCodeOptionsGameNameDelete({
-    code: code.value,
-    gameName: name
+  await deleteOption({
+      path: { code: code.value, gameName: name }
   }).catch((e: any) => {
     console.error('Failed to remove option:', e)
   })

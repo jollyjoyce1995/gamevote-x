@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import type { PartyDTO } from '@/api'
+import type { ServicePartyDto as PartyDTO } from '@/generated-api'
 
 const props = defineProps<{
   party: PartyDTO

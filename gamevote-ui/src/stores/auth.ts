@@ -1,16 +1,20 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { loginUser, validateUser } from '@/api'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
 import Cookies from 'js-cookie'
+import {validateUser, login as apiLogin} from '@/api-client'
 
 export const useAuthStore = defineStore('auth', () => {
-    const username = ref<string | null>(Cookies.get('username') || null)
+    const username = ref<string | null>(localStorage.getItem('username'))
     const isValidating = ref(false)
 
     async function login(name: string) {
-        await loginUser(name)
         username.value = name
-        Cookies.set('username', name, { expires: 30 })
+        Cookies.set('username', name)
+        try {
+            await apiLogin({body: {username: name}})
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     async function validateSession(): Promise<boolean> {
@@ -28,7 +32,11 @@ export const useAuthStore = defineStore('auth', () => {
 
         isValidating.value = true
         try {
-            await validateUser(cookieUsername)
+            await validateUser({
+                path: {
+                    username: cookieUsername
+                }
+            })
             username.value = cookieUsername
             return true
         } catch (error) {
@@ -47,5 +55,5 @@ export const useAuthStore = defineStore('auth', () => {
         Cookies.remove('username')
     }
 
-    return { username, isValidating, login, logout, validateSession }
+    return {username, isValidating, login, logout, validateSession}
 })

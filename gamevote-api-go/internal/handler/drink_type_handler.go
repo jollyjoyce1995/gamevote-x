@@ -24,6 +24,7 @@ func NewDrinkTypeHandler(service *service.DrinkTypeService) *DrinkTypeHandler {
 // @Tags         drinks
 // @Produce      json
 // @Success      200  {array}  models.DrinkType
+// @ID           GetDrinkTypes
 // @Router       /drinks/presets [get]
 func (h *DrinkTypeHandler) GetDrinkTypes(c *gin.Context) {
 	types, err := h.DrinkTypeService.GetDrinkTypes()
@@ -44,6 +45,7 @@ func (h *DrinkTypeHandler) GetDrinkTypes(c *gin.Context) {
 // @Produce      json
 // @Param        drinkType body models.DrinkType true "Drink Type Details"
 // @Success      200  {object}  models.DrinkType
+// @ID           PostDrinkType
 // @Router       /drinks/presets [post]
 func (h *DrinkTypeHandler) PostDrinkType(c *gin.Context) {
 	var dt models.DrinkType

@@ -25,6 +25,7 @@ const docTemplate = `{
                     "drinks"
                 ],
                 "summary": "Get preset drinks",
+                "operationId": "GetDrinkTypes",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -49,6 +50,7 @@ const docTemplate = `{
                     "drinks"
                 ],
                 "summary": "Add custom drink preset",
+                "operationId": "PostDrinkType",
                 "parameters": [
                     {
                         "description": "Drink Type Details",
@@ -80,6 +82,7 @@ const docTemplate = `{
                     "games"
                 ],
                 "summary": "Search games",
+                "operationId": "SearchGames",
                 "parameters": [
                     {
                         "type": "string",
@@ -112,6 +115,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Get all parties",
+                "operationId": "GetParties",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -136,6 +140,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Create a new party",
+                "operationId": "CreateParty",
                 "parameters": [
                     {
                         "description": "Party details",
@@ -167,6 +172,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Get a party",
+                "operationId": "GetParty",
                 "parameters": [
                     {
                         "type": "string",
@@ -197,6 +203,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Patch a party",
+                "operationId": "PatchParty",
                 "parameters": [
                     {
                         "type": "string",
@@ -238,6 +245,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Add an attendee",
+                "operationId": "PostAttendee",
                 "parameters": [
                     {
                         "type": "string",
@@ -273,6 +281,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Delete an attendee",
+                "operationId": "DeleteAttendee",
                 "parameters": [
                     {
                         "type": "string",
@@ -309,6 +318,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Add a beer",
+                "operationId": "PostBeer",
                 "parameters": [
                     {
                         "type": "string",
@@ -347,6 +357,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Add an option",
+                "operationId": "PostOption",
                 "parameters": [
                     {
                         "type": "string",
@@ -382,6 +393,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "Delete an option",
+                "operationId": "DeleteOption",
                 "parameters": [
                     {
                         "type": "string",
@@ -415,6 +427,7 @@ const docTemplate = `{
                     "parties"
                 ],
                 "summary": "SSE stream for a party",
+                "operationId": "StreamParty",
                 "parameters": [
                     {
                         "type": "string",
@@ -500,6 +513,7 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get all users",
+                "operationId": "GetUsers",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -524,6 +538,7 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Login or Register a User",
+                "operationId": "Login",
                 "parameters": [
                     {
                         "description": "Login Request",
@@ -540,6 +555,42 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.UserDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{username}": {
+            "get": {
+                "description": "Check if a user exists in the database by username",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Validate if a user exists",
+                "operationId": "ValidateUser",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.UserDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object"
                         }
                     }
                 }

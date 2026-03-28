@@ -14,31 +14,31 @@
         <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
           <div
             v-for="u in allUsers"
-            :key="u.id"
-            @click="toggleAttendee(u.username)"
+            :key="u.username"
+            @click="toggleAttendee(u.username || '')"
             class="flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 group"
-            :class="attendees.includes(u.username) 
+            :class="attendees.includes(u.username || '') 
               ? 'bg-indigo-500/10 border-indigo-500/40 border' 
               : 'bg-white/5 border-transparent border hover:bg-white/10 hover:border-white/10'"
           >
             <div class="flex items-center gap-3">
               <div 
                 class="w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-inner"
-                :class="attendees.includes(u.username) ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'"
+                :class="attendees.includes(u.username || '') ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'"
               >
-                {{ u.username.charAt(0).toUpperCase() }}
+                {{ u.username?.charAt(0).toUpperCase() }}
               </div>
-              <span class="font-medium" :class="attendees.includes(u.username) ? 'text-indigo-200' : 'text-slate-300'">
+              <span class="font-medium" :class="attendees.includes(u.username || '') ? 'text-indigo-200' : 'text-slate-300'">
                 {{ u.username }}
               </span>
             </div>
             <div 
               class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
-              :class="attendees.includes(u.username) 
+              :class="attendees.includes(u.username || '') 
                 ? 'bg-indigo-500 border-indigo-500' 
                 : 'border-slate-700 group-hover:border-slate-500'"
             >
-              <span v-if="attendees.includes(u.username)" class="text-white text-xs">✓</span>
+              <span v-if="attendees.includes(u.username || '')" class="text-white text-xs">✓</span>
             </div>
           </div>
         </div>
@@ -66,20 +66,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { createParty, addAttendee as addAttendeeApi, getUsers } from '@/api'
+import { createParty, postAttendee, getUsers } from '@/api-client'
+import type { ServiceUserDto as UserDTO } from '@/generated-api'
 
 const router = useRouter()
-const allUsers = ref<{ id: string; username: string }[]>([])
+const allUsers = ref<UserDTO[]>([])
 const attendees = ref<string[]>([])
 const loading = ref(false)
 const error = ref('')
 
 onMounted(async () => {
   try {
-    const users = await getUsers()
-    allUsers.value = users
+    const usersResp = await getUsers()
+    allUsers.value = usersResp.data || []
     // Preselect everyone
-    attendees.value = users.map(u => u.username)
+    attendees.value = allUsers.value.map(u => u.username || '')
   } catch (e) {
     console.error('Failed to fetch users:', e)
     error.value = 'Could not load users. Please check if the backend is running.'
@@ -100,12 +101,13 @@ async function handleCreate() {
   loading.value = true
   error.value = ''
   try {
-    const party = await createParty(attendees.value)
+    const partyResp = await createParty({ body: {} })
+    const partyCode = partyResp.data?.code!
     // Add each attendee via the API
     for (const a of attendees.value) {
-      await addAttendeeApi(party.code, a).catch(() => {})
+      await postAttendee({ path: { code: partyCode }, body: { value: a } }).catch(() => {})
     }
-    router.push(`/parties/${party.code}`)
+    router.push(`/parties/${partyCode}`)
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to create party'
   } finally {
