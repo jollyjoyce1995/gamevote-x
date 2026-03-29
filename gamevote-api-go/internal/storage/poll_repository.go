@@ -31,9 +31,9 @@ func (r *PollRepository) Save(poll *models.Poll) error {
 }
 
 
-func (r *PollRepository) FindByPartyIdAndAttendee(partyId surrealmodels.RecordID, attendee surrealmodels.RecordID) (*models.Poll, error) {
+func (r *PollRepository) FindByPartyIdAndAttendee(partyId surrealmodels.RecordID, attendee surrealmodels.RecordID, round int) (*models.Poll, error) {
 	ctx := context.Background()
-	res, err := surrealdb.Query[[]models.Poll](ctx, DB, "SELECT * FROM polls where party.id = $partyId and attendee.id = $attendee", map[string]interface{}{"partyId": partyId, "attendee": attendee})
+	res, err := surrealdb.Query[[]models.Poll](ctx, DB, "SELECT * FROM polls where party.id = $partyId and attendee.id = $attendee and round = $round", map[string]interface{}{"partyId": partyId, "attendee": attendee, "round": round})
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +54,28 @@ func (r *PollRepository) FindAllByPartyId(partyId surrealmodels.RecordID) ([]mod
 		return []models.Poll{}, nil
 	}
 	return (*res)[0].Result, nil
+}
+
+type MaxRoundResult struct {
+	MaxRound int `json:"maxRound"`
+}
+
+func (r *PollRepository) FindMaxRoundByPartyId(partyId surrealmodels.RecordID) (int, error) {
+	ctx := context.Background()
+	res, err := surrealdb.Query[[]MaxRoundResult](ctx, DB, "SELECT math::max(round) AS maxRound FROM polls WHERE party = $partyId AND status = 'COMPLETED' GROUP ALL", map[string]interface{}{"partyId": partyId})
+	if err != nil {
+		return 0, err
+	}
+	if res == nil || len(*res) == 0 || len((*res)[0].Result) == 0 {
+		return 0, nil
+	}
+	return (*res)[0].Result[0].MaxRound, nil
+}
+
+func (r *PollRepository) MarkAllInProgressAsCompleted(partyId surrealmodels.RecordID) error {
+	ctx := context.Background()
+	_, err := surrealdb.Query[interface{}](ctx, DB, "UPDATE polls SET status = 'COMPLETED' WHERE party = $partyId AND status = 'IN_PROGRESS'", map[string]interface{}{"partyId": partyId})
+	return err
 }
 
 type VotedUsernameResult struct {
@@ -92,6 +114,7 @@ func (r *PollRepository) InitTable() error {
 		DEFINE FIELD IF NOT EXISTS attendee ON TABLE polls TYPE record<users>;
 		DEFINE FIELD IF NOT EXISTS party ON TABLE polls TYPE record<parties>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE polls TYPE string ASSERT $value INSIDE ['IN_PROGRESS', 'COMPLETED'];
+		DEFINE FIELD IF NOT EXISTS round ON TABLE polls TYPE int;
 	`
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)
 	return err

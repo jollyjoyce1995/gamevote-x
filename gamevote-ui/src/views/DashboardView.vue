@@ -52,7 +52,13 @@ const loading = ref(true)
 onMounted(async () => {
   try {
     const res = await getParties()
-    parties.value = res.data as PartyDTO[]
+    const data = (res.data as PartyDTO[]) || []
+    // Sort newest first by createdAt
+    parties.value = data.sort((a, b) => {
+      const da = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0
+      const db = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0
+      return db - da
+    })
   } finally {
     loading.value = false
   }

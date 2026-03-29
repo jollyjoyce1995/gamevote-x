@@ -83,6 +83,10 @@ definitions:
         type: object
       code:
         type: string
+      createdAt:
+        type: string
+      currentRound:
+        type: integer
       id:
         type: string
       options:
@@ -92,6 +96,12 @@ definitions:
       results:
         additionalProperties:
           type: integer
+        type: object
+      roundResults:
+        additionalProperties:
+          additionalProperties:
+            type: integer
+          type: object
         type: object
       status:
         type: string

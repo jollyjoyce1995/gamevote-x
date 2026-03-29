@@ -20,4 +20,5 @@ type Poll struct {
 	Attendee *surrealmodels.RecordID `json:"attendee" surreal:"attendee"`
 	Party    *surrealmodels.RecordID `json:"party" surreal:"party"`
 	Status   PollStatus              `json:"status" surreal:"status"`
+	Round    int                     `json:"round" surreal:"round"`
 }

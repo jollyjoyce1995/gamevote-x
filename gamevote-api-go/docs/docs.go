@@ -725,6 +725,12 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currentRound": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -738,6 +744,15 @@ const docTemplate = `{
                     "type": "object",
                     "additionalProperties": {
                         "type": "integer"
+                    }
+                },
+                "roundResults": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
                     }
                 },
                 "status": {

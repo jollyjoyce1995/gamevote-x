@@ -6,6 +6,7 @@ import (
 	"gamevote-api-go/internal/storage"
 	"log/slog"
 	"math/rand"
+	"time"
 
 	surrealmodels "github.com/surrealdb/surrealdb.go/pkg/models"
 )
@@ -58,6 +59,7 @@ func (s *PartyService) CreateParty(party *models.Party) (*models.Party, error) {
 		party.Options = []models.PartyOption{}
 	}
 	party.Status = models.PartyStatusNomination
+	party.CreatedAt = time.Now()
 	slog.Info("Saving new party to database", "code", party.Code)
 	err := s.PartyRepo.Save(party)
 	return party, err
@@ -136,8 +138,9 @@ func (s *PartyService) PatchParty(code string, toStatus models.PartyStatus) (*mo
 		// Can initialize things for voting here if requested later
 		s.BroadcastOutstandingVoters(party)
 	} else if toStatus == models.PartyStatusResults {
-		if err != nil {
-			slog.Error("Failed to calculate results", "error", err)
+		slog.Info("Transitioning to RESULTS", "code", party.Code)
+		if party.ID != nil {
+			s.PollService.MarkAllInProgressAsCompleted(*party.ID)
 		}
 	}
 
@@ -263,7 +266,13 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 		return err
 	}
 
-	poll, err := s.PollService.GetPollsByPartyIdAndAttendee(*party.ID, *user.ID)
+	polls, err := s.PollService.GetResultsByPartyId(*party.ID)
+	if err != nil {
+		return err
+	}
+	currentRound := s.getCurrentRound(polls)
+
+	poll, err := s.PollService.GetPollsByPartyIdAndAttendee(*party.ID, *user.ID, currentRound)
 	if err != nil {
 		return err
 	}
@@ -274,6 +283,7 @@ func (s *PartyService) AddPoll(code string, attendee string, choices map[string]
 			Attendee: user.ID,
 			Party:    party.ID,
 			Options:  s.MapChoices(party.Options, choices),
+			Round:    currentRound,
 		}
 		poll, err = s.PollService.Upsert(poll)
 		if err != nil {
@@ -345,15 +355,18 @@ func (s *PartyService) PostBeer(code string, attendee string) error {
 
 // Helper models for the responses
 type PartyDTO struct {
-	ID              string               `json:"id"`
-	Attendees       []string             `json:"attendees"`
-	Options         []models.PartyOption `json:"options"`
-	Status          string               `json:"status"`
-	Results         map[string]int       `json:"results,omitempty"`
-	Code            string               `json:"code,omitempty"`
-	Links           map[string]Link      `json:"_links"`
-	BeerCount       int                  `json:"beerCount"`
-	BeerPerAttendee map[string]int       `json:"beerPerAttendee"`
+	ID              string                 `json:"id"`
+	Attendees       []string               `json:"attendees"`
+	Options         []models.PartyOption   `json:"options"`
+	Status          string                 `json:"status"`
+	Results         map[string]int         `json:"results,omitempty"`
+	Code            string                 `json:"code,omitempty"`
+	Links           map[string]Link        `json:"_links"`
+	BeerCount       int                    `json:"beerCount"`
+	BeerPerAttendee map[string]int         `json:"beerPerAttendee"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	CurrentRound    int                    `json:"currentRound"`
+	RoundResults    map[int]map[string]int `json:"roundResults,omitempty"`
 }
 
 type Link struct {
@@ -377,26 +390,37 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		beerPerAttendee[a] = count
 	}
 
-	polls, err := s.PollService.GetResultsByPartyId(*party.ID)
-	if err != nil {
-		return nil, err
+	var currentRound int
+	var polls []models.Poll
+	if party.ID != nil {
+		polls, err = s.PollService.GetResultsByPartyId(*party.ID)
+		if err != nil {
+			return nil, err
+		}
+		currentRound = s.getCurrentRound(polls)
+	} else {
+		currentRound = 1
 	}
+
 	var results map[string]int
-	if polls != nil {
+	var roundResults map[int]map[string]int
+	if party.ID != nil && polls != nil {
 		results = make(map[string]int)
+		roundResults = make(map[int]map[string]int)
+
 		for _, p := range polls {
+			if roundResults[p.Round] == nil {
+				roundResults[p.Round] = make(map[string]int)
+			}
 			for _, o := range p.Options {
-				value, exists := results[o.PartyOption.Name]
-				slog.Info("Checking for existing value", "Name", o.PartyOption.Name, "value", o.Vote, "exists", exists)
-				if exists {
-					results[o.PartyOption.Name] = value + o.Vote
-				} else {
-					results[o.PartyOption.Name] = o.Vote
+				if p.Round == currentRound {
+					results[o.PartyOption.Name] += o.Vote
 				}
+				roundResults[p.Round][o.PartyOption.Name] += o.Vote
 			}
 		}
 	}
-	slog.Info("Got poll results", "results", results)
+
 	slog.Info("Converting party to DTO")
 	return &PartyDTO{
 		ID:              party.ID.String(),
@@ -407,7 +431,20 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		Code:            party.Code,
 		BeerCount:       len(beers),
 		BeerPerAttendee: beerPerAttendee,
+		CreatedAt:       party.CreatedAt,
+		CurrentRound:    currentRound,
+		RoundResults:    roundResults,
 	}, nil
+}
+
+func (s *PartyService) getCurrentRound(polls []models.Poll) int {
+	maxCompleted := 0
+	for _, p := range polls {
+		if p.Round > maxCompleted {
+			maxCompleted = p.Round
+		}
+	}
+	return maxCompleted
 }
 
 func (s *PartyService) GetOutstandingVoters(party *models.Party) []string {

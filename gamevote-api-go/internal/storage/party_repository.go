@@ -47,7 +47,7 @@ func (r *PartyRepository) FindBySurrealID(id surrealmodels.RecordID) (*models.Pa
 
 func (r *PartyRepository) FindAll() ([]models.Party, error) {
 	ctx := context.Background()
-	res, err := surrealdb.Query[[]models.Party](ctx, DB, "SELECT * FROM parties ORDER BY id", nil)
+	res, err := surrealdb.Query[[]models.Party](ctx, DB, "SELECT * FROM parties ORDER BY createdAt DESC", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +87,7 @@ func (r *PartyRepository) InitTable() error {
 		DEFINE FIELD IF NOT EXISTS attendees ON TABLE parties TYPE array<string>;
 		DEFINE FIELD IF NOT EXISTS options ON TABLE parties TYPE array<{name:string, appId: option<int>, imageUrl: option<string>}>;
 		DEFINE FIELD IF NOT EXISTS status ON TABLE parties TYPE string ASSERT $value INSIDE ['NOMINATION', 'VOTING', 'RESULTS'];
+		DEFINE FIELD IF NOT EXISTS createdAt ON TABLE parties TYPE datetime;
 	`
 	slog.Debug("Initializing parties table")
 	_, err := surrealdb.Query[interface{}](ctx, DB, query, nil)

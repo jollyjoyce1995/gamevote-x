@@ -2,9 +2,10 @@ import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import Cookies from 'js-cookie'
 import {validateUser, login as apiLogin} from '@/api-client'
+import {resolve} from "chart.js/helpers";
 
 export const useAuthStore = defineStore('auth', () => {
-    const username = ref<string | null>(localStorage.getItem('username'))
+    const username = ref<string | undefined>(Cookies.get('username'))
     const isValidating = ref(false)
 
     async function login(name: string) {
@@ -20,38 +21,35 @@ export const useAuthStore = defineStore('auth', () => {
     async function validateSession(): Promise<boolean> {
         const cookieUsername = Cookies.get('username')
         if (!cookieUsername) {
-            username.value = null
+            username.value = undefined
             return false
-        }
-
-        // If we already have the username and it matches cookie, assume it's valid
-        // This prevents unnecessary API calls on every route change
-        if (username.value === cookieUsername) {
-            return true
         }
 
         isValidating.value = true
-        try {
-            await validateUser({
-                path: {
-                    username: cookieUsername
-                }
-            })
-            username.value = cookieUsername
-            return true
-        } catch (error) {
+
+        const response = await validateUser({
+            path: {
+                username: cookieUsername
+            }
+        })
+
+        if(response.error) {
             // User doesn't exist in database, clear invalid cookie
             console.warn('Session invalid: user not found in database, clearing cookie')
-            username.value = null
+            username.value = undefined
             Cookies.remove('username')
-            return false
-        } finally {
+            console.log("asdf4")
             isValidating.value = false
+            return false
+        }else{
+            username.value = cookieUsername
+            isValidating.value = false
+            return true
         }
     }
 
     function logout() {
-        username.value = null
+        username.value = undefined
         Cookies.remove('username')
     }
 

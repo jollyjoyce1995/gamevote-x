@@ -21,8 +21,16 @@ func (s *PollService) Upsert(poll *models.Poll) (*models.Poll, error) {
 	return poll, err
 }
 
-func (s *PollService) GetPollsByPartyIdAndAttendee(id surrealmodels.RecordID, attendee surrealmodels.RecordID) (*models.Poll, error) {
-	return s.PollRepo.FindByPartyIdAndAttendee(id, attendee)
+func (s *PollService) GetPollsByPartyIdAndAttendee(id surrealmodels.RecordID, attendee surrealmodels.RecordID, round int) (*models.Poll, error) {
+	return s.PollRepo.FindByPartyIdAndAttendee(id, attendee, round)
+}
+
+func (s *PollService) MarkAllInProgressAsCompleted(partyId surrealmodels.RecordID) error {
+	return s.PollRepo.MarkAllInProgressAsCompleted(partyId)
+}
+
+func (s *PollService) GetMaxRoundByPartyId(partyId surrealmodels.RecordID) (int, error) {
+	return s.PollRepo.FindMaxRoundByPartyId(partyId)
 }
 
 func (s *PollService) GetVotedUsernamesByPartyId(partyId surrealmodels.RecordID) ([]string, error) {

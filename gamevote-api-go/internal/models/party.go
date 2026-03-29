@@ -1,6 +1,10 @@
 package models
 
-import "github.com/surrealdb/surrealdb.go/pkg/models"
+import (
+	"time"
+
+	"github.com/surrealdb/surrealdb.go/pkg/models"
+)
 
 type PartyStatus string
 
@@ -22,4 +26,5 @@ type Party struct {
 	Attendees []string         `json:"attendees" surreal:"attendees"`
 	Options   []PartyOption    `json:"options" surreal:"options"`
 	Status    PartyStatus      `json:"status" surreal:"status"`
+	CreatedAt time.Time        `json:"createdAt" surreal:"createdAt"`
 }

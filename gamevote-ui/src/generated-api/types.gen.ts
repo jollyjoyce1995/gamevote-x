@@ -65,10 +65,17 @@ export type ServicePartyDto = {
         [key: string]: number;
     };
     code?: string;
+    createdAt?: string;
+    currentRound?: number;
     id?: string;
     options?: Array<ModelsPartyOption>;
     results?: {
         [key: string]: number;
+    };
+    roundResults?: {
+        [key: string]: {
+            [key: string]: number;
+        };
     };
     status?: string;
 };
