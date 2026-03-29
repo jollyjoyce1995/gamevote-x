@@ -395,3 +395,32 @@ func (h *PartyHandler) PostBeer(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
+
+// PostNextRound godoc
+// @Summary      Raise the round
+// @Description  Start the next round for a party
+// @Tags         parties
+// @Produce      application/json
+// @Param        code path string true "Party Code"
+// @Success      200 {object} service.PartyDTO
+// @ID           PostNextRound
+// @Router       /parties/{code}/next-round [post]
+func (h *PartyHandler) PostNextRound(c *gin.Context) {
+	code := c.Param("code")
+
+	slog.Info("Starting next round", "code", code)
+
+	partyFromDb, err := h.PartyService.NextRound(code)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	dto, err := h.PartyService.ToDTO(partyFromDb)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto)
+}

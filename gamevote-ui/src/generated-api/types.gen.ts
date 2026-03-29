@@ -291,6 +291,27 @@ export type PostBeerResponses = {
     200: unknown;
 };
 
+export type PostNextRoundData = {
+    body?: never;
+    path: {
+        /**
+         * Party Code
+         */
+        code: string;
+    };
+    query?: never;
+    url: '/parties/{code}/next-round';
+};
+
+export type PostNextRoundResponses = {
+    /**
+     * OK
+     */
+    200: ServicePartyDto;
+};
+
+export type PostNextRoundResponse = PostNextRoundResponses[keyof PostNextRoundResponses];
+
 export type PostOptionData = {
     /**
      * Option Details

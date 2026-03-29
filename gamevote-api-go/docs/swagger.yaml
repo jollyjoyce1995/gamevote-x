@@ -342,6 +342,26 @@ paths:
       summary: Add a beer
       tags:
       - parties
+  /parties/{code}/next-round:
+    post:
+      description: Start the next round for a party
+      operationId: PostNextRound
+      parameters:
+      - description: Party Code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.PartyDTO'
+      summary: Raise the round
+      tags:
+      - parties
   /parties/{code}/options:
     post:
       consumes:

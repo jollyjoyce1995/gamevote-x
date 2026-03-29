@@ -91,7 +91,7 @@ import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 import {RouterLink, useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {usePartyStore} from '@/stores/party'
-import { patchParty, getParty, postAttendee, client } from '@/api-client'
+import { patchParty, getParty, postAttendee, postNextRound, client } from '@/api-client'
 import type {ServicePartyDto as PartyDTO} from '@/generated-api'
 
 import PartyNomination from '@/components/party/PartyNomination.vue'
@@ -181,9 +181,8 @@ async function newRound() {
   if (!party.value) return
   restarting.value = true
   try {
-    const updated = await patchParty({
-      path: { code: code.value },
-      body: { status: 'NOMINATION' }
+    const updated = await postNextRound({
+      path: { code: code.value }
     })
     partyStore.setParty(updated.data as PartyDTO)
     activeTab.value = 'NOMINATION'

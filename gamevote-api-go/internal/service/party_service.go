@@ -59,6 +59,7 @@ func (s *PartyService) CreateParty(party *models.Party) (*models.Party, error) {
 		party.Options = []models.PartyOption{}
 	}
 	party.Status = models.PartyStatusNomination
+	party.CurrentRound = 1
 	party.CreatedAt = time.Now()
 	slog.Info("Saving new party to database", "code", party.Code)
 	err := s.PartyRepo.Save(party)
@@ -397,7 +398,11 @@ func (s *PartyService) ToDTO(party *models.Party) (*PartyDTO, error) {
 		if err != nil {
 			return nil, err
 		}
-		currentRound = s.getCurrentRound(polls)
+		if party.CurrentRound > 0 {
+			currentRound = party.CurrentRound
+		} else {
+			currentRound = s.getCurrentRound(polls)
+		}
 	} else {
 		currentRound = 1
 	}
@@ -449,7 +454,17 @@ func (s *PartyService) getCurrentRound(polls []models.Poll) int {
 
 func (s *PartyService) GetOutstandingVoters(party *models.Party) []string {
 	var outstandingVoters []string
-	votedUsers, err := s.PollService.GetVotedUsernamesByPartyId(*party.ID)
+	if party.ID == nil {
+		return party.Attendees
+	}
+
+	currentRound := party.CurrentRound
+	if currentRound <= 0 {
+		polls, _ := s.PollService.GetResultsByPartyId(*party.ID)
+		currentRound = s.getCurrentRound(polls)
+	}
+
+	votedUsers, err := s.PollService.GetVotedUsernamesByPartyIdAndRound(*party.ID, currentRound)
 	if err == nil {
 		votedMap := make(map[string]bool)
 		for _, u := range votedUsers {
@@ -495,4 +510,35 @@ func (s *PartyService) ToDomain(dto *PartyDTO) (*models.Party, error) {
 		Options:   options,
 		Status:    models.PartyStatus(dto.Status),
 	}, nil
+}
+
+func (s *PartyService) NextRound(code string) (*models.Party, error) {
+	party, err := s.PartyRepo.FindByCode(code)
+	if err != nil {
+		return nil, err
+	}
+
+	if party.Status != models.PartyStatusResults {
+		return nil, errors.New("bad request: must be in RESULTS phase to start Next Round")
+	}
+
+	party.Status = models.PartyStatusNomination
+	if party.CurrentRound > 0 {
+		party.CurrentRound++
+	} else {
+		polls, _ := s.PollService.GetResultsByPartyId(*party.ID)
+		party.CurrentRound = s.getCurrentRound(polls) + 1
+	}
+
+	err = s.PartyRepo.Save(party)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.Broker != nil {
+		dto, _ := s.ToDTO(party)
+		s.Broker.Broadcast(party.Code, "party_updated", dto)
+	}
+
+	return party, nil
 }

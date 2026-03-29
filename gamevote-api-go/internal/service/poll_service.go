@@ -33,8 +33,8 @@ func (s *PollService) GetMaxRoundByPartyId(partyId surrealmodels.RecordID) (int,
 	return s.PollRepo.FindMaxRoundByPartyId(partyId)
 }
 
-func (s *PollService) GetVotedUsernamesByPartyId(partyId surrealmodels.RecordID) ([]string, error) {
-	return s.PollRepo.FindVotedUsernamesByPartyId(partyId)
+func (s *PollService) GetVotedUsernamesByPartyIdAndRound(partyId surrealmodels.RecordID, round int) ([]string, error) {
+	return s.PollRepo.FindVotedUsernamesByPartyIdAndRound(partyId, round)
 }
 
 func (s *PollService) GetResultsByPartyId(partyId surrealmodels.RecordID) ([]models.Poll, error) {

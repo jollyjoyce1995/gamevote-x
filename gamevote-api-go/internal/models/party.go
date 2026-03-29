@@ -25,6 +25,7 @@ type Party struct {
 	Code      string           `json:"code" surreal:"code"`
 	Attendees []string         `json:"attendees" surreal:"attendees"`
 	Options   []PartyOption    `json:"options" surreal:"options"`
-	Status    PartyStatus      `json:"status" surreal:"status"`
-	CreatedAt time.Time        `json:"createdAt" surreal:"createdAt"`
+	Status       PartyStatus      `json:"status" surreal:"status"`
+	CurrentRound int              `json:"currentRound" surreal:"currentRound"`
+	CreatedAt    time.Time        `json:"createdAt" surreal:"createdAt"`
 }

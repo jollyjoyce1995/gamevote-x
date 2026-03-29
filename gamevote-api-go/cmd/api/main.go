@@ -99,6 +99,7 @@ func main() {
 	router.POST("/parties", partyHandler.CreateParty)
 	router.GET("/parties/:code", partyHandler.GetParty)
 	router.PATCH("/parties/:code", partyHandler.PatchParty)
+	router.POST("/parties/:code/next-round", partyHandler.PostNextRound)
 	router.GET("/parties/:code/stream", partyHandler.StreamParty)
 	router.POST("/parties/:code/options", partyHandler.PostOption)
 	router.DELETE("/parties/:code/options/:gameName", partyHandler.DeleteOption)

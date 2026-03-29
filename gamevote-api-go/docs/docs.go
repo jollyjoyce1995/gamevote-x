@@ -344,6 +344,36 @@ const docTemplate = `{
                 }
             }
         },
+        "/parties/{code}/next-round": {
+            "post": {
+                "description": "Start the next round for a party",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parties"
+                ],
+                "summary": "Raise the round",
+                "operationId": "PostNextRound",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Party Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.PartyDTO"
+                        }
+                    }
+                }
+            }
+        },
         "/parties/{code}/options": {
             "post": {
                 "description": "Add an option to a party",

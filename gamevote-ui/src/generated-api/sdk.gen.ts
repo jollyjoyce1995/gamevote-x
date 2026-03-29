@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreatePartyData, CreatePartyResponses, DeleteAttendeeData, DeleteAttendeeResponses, DeleteOptionData, DeleteOptionResponses, GetDrinkTypesData, GetDrinkTypesResponses, GetPartiesData, GetPartiesResponses, GetPartyData, GetPartyResponses, GetUsersData, GetUsersResponses, LoginData, LoginResponses, PatchPartyData, PatchPartyResponses, PostAttendeeData, PostAttendeeResponses, PostBeerData, PostBeerResponses, PostDrinkTypeData, PostDrinkTypeResponses, PostOptionData, PostOptionResponses, PostVoteData, PostVoteResponses, SearchGamesData, SearchGamesResponses, StreamPartyData, StreamPartyResponses, ValidateUserData, ValidateUserErrors, ValidateUserResponses } from './types.gen';
+import type { CreatePartyData, CreatePartyResponses, DeleteAttendeeData, DeleteAttendeeResponses, DeleteOptionData, DeleteOptionResponses, GetDrinkTypesData, GetDrinkTypesResponses, GetPartiesData, GetPartiesResponses, GetPartyData, GetPartyResponses, GetUsersData, GetUsersResponses, LoginData, LoginResponses, PatchPartyData, PatchPartyResponses, PostAttendeeData, PostAttendeeResponses, PostBeerData, PostBeerResponses, PostDrinkTypeData, PostDrinkTypeResponses, PostNextRoundData, PostNextRoundResponses, PostOptionData, PostOptionResponses, PostVoteData, PostVoteResponses, SearchGamesData, SearchGamesResponses, StreamPartyData, StreamPartyResponses, ValidateUserData, ValidateUserErrors, ValidateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -122,6 +122,13 @@ export const postBeer = <ThrowOnError extends boolean = false>(options: Options<
         ...options.headers
     }
 });
+
+/**
+ * Raise the round
+ *
+ * Start the next round for a party
+ */
+export const postNextRound = <ThrowOnError extends boolean = false>(options: Options<PostNextRoundData, ThrowOnError>) => (options.client ?? client).post<PostNextRoundResponses, unknown, ThrowOnError>({ url: '/parties/{code}/next-round', ...options });
 
 /**
  * Add an option
