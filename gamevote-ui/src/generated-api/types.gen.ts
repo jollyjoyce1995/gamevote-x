@@ -68,6 +68,16 @@ export type SetStatusRequest = {
 
 export type AddBeerRequest = {
     attendee: string;
+    drinkName?: string;
+    beerEquivalent?: number;
+};
+
+export type BeerEntry = {
+    id: number;
+    attendee: string;
+    drinkName: string;
+    beerEquivalent: number;
+    createdAt: string;
 };
 
 /**
@@ -109,6 +119,7 @@ export type Party = {
     beerPerAttendee: {
         [key: string]: number;
     };
+    beerLog: Array<BeerEntry>;
 };
 
 export type Code = string;

@@ -41,7 +41,18 @@ func (e PartyStatus) Valid() bool {
 
 // AddBeerRequest defines model for AddBeerRequest.
 type AddBeerRequest struct {
-	Attendee string `json:"attendee"`
+	Attendee       string   `json:"attendee"`
+	BeerEquivalent *float32 `json:"beerEquivalent,omitempty"`
+	DrinkName      *string  `json:"drinkName,omitempty"`
+}
+
+// BeerEntry defines model for BeerEntry.
+type BeerEntry struct {
+	Attendee       string    `json:"attendee"`
+	BeerEquivalent float32   `json:"beerEquivalent"`
+	CreatedAt      time.Time `json:"createdAt"`
+	DrinkName      string    `json:"drinkName"`
+	Id             int       `json:"id"`
 }
 
 // CreatePartyRequest defines model for CreatePartyRequest.
@@ -92,6 +103,7 @@ type NewDrinkType struct {
 type Party struct {
 	Attendees       []string       `json:"attendees"`
 	BeerCount       int            `json:"beerCount"`
+	BeerLog         []BeerEntry    `json:"beerLog"`
 	BeerPerAttendee map[string]int `json:"beerPerAttendee"`
 	Code            string         `json:"code"`
 	CreatedAt       time.Time      `json:"createdAt"`

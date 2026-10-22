@@ -138,7 +138,15 @@ func (s *Server) SubmitVotes(ctx context.Context, req api.SubmitVotesRequestObje
 
 func (s *Server) AddBeer(ctx context.Context, req api.AddBeerRequestObject) (api.AddBeerResponseObject, error) {
 	code := cleanCode(req.Code)
-	if err := s.store.AddBeer(ctx, code, strings.TrimSpace(req.Body.Attendee)); err != nil {
+	drinkName := "Beer"
+	if req.Body.DrinkName != nil && strings.TrimSpace(*req.Body.DrinkName) != "" {
+		drinkName = strings.TrimSpace(*req.Body.DrinkName)
+	}
+	var beerEq float32 = 1.0
+	if req.Body.BeerEquivalent != nil && *req.Body.BeerEquivalent > 0 {
+		beerEq = *req.Body.BeerEquivalent
+	}
+	if err := s.store.AddBeer(ctx, code, strings.TrimSpace(req.Body.Attendee), drinkName, beerEq); err != nil {
 		return nil, err
 	}
 	if _, err := s.changed(ctx, code, false); err != nil {

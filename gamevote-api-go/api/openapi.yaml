@@ -366,6 +366,18 @@ components:
       required: [attendee]
       properties:
         attendee: { type: string }
+        drinkName: { type: string }
+        beerEquivalent: { type: number }
+
+    BeerEntry:
+      type: object
+      required: [id, attendee, drinkName, beerEquivalent, createdAt]
+      properties:
+        id: { type: integer }
+        attendee: { type: string }
+        drinkName: { type: string }
+        beerEquivalent: { type: number }
+        createdAt: { type: string, format: date-time }
 
     Votes:
       type: object
@@ -399,6 +411,7 @@ components:
         - roundResults
         - beerCount
         - beerPerAttendee
+        - beerLog
       properties:
         code: { type: string }
         status: { $ref: '#/components/schemas/PartyStatus' }
@@ -424,3 +437,6 @@ components:
         beerPerAttendee:
           type: object
           additionalProperties: { type: integer }
+        beerLog:
+          type: array
+          items: { $ref: '#/components/schemas/BeerEntry' }

@@ -128,6 +128,9 @@ func TestPartyLifecycle(t *testing.T) {
 	if p.BeerCount != 1 || p.BeerPerAttendee[alice] != 1 || p.BeerPerAttendee[bob] != 0 {
 		t.Fatalf("beers: %+v", p)
 	}
+	if len(p.BeerLog) != 1 || p.BeerLog[0].Attendee != alice || p.BeerLog[0].DrinkName != "Beer" || p.BeerLog[0].CreatedAt.IsZero() {
+		t.Fatalf("beer log mismatch: %+v", p.BeerLog)
+	}
 
 	// next round
 	call[api.Error](t, ts, "PUT", "/parties/"+code+"/status", api.SetStatusRequest{Status: api.VOTING}, 409)

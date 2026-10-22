@@ -12,45 +12,10 @@ services:
       POSTGRES_USER: gamevote
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gamevote}
       POSTGRES_DB: gamevote
-    # Defaults are sized for big servers; these fit a handful of users.
-    command:
-      - postgres
-      - -c
-      - shared_buffers=16MB
-      - -c
-      - max_connections=20
-      - -c
-      - work_mem=2MB
-      - -c
-      - maintenance_work_mem=16MB
-      - -c
-      - autovacuum_work_mem=16MB
-      - -c
-      - autovacuum_max_workers=2
-      - -c
-      - effective_cache_size=64MB
-      - -c
-      - wal_buffers=1MB
-      - -c
-      - min_wal_size=32MB
-      - -c
-      - max_wal_size=128MB
-      - -c
-      - checkpoint_timeout=15min
-      - -c
-      - max_wal_senders=0
-      - -c
-      - max_worker_processes=2
-      - -c
-      - max_parallel_workers=0
-      - -c
-      - max_parallel_workers_per_gather=0
-      - -c
-      - max_parallel_maintenance_workers=0
-      - -c
-      - jit=off
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./custom-postgres.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     ports:
       - "127.0.0.1:5432:5432" # local development only, not exposed to the network
     healthcheck:

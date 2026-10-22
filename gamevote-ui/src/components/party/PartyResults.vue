@@ -19,11 +19,22 @@
         </div>
         <div class="flex flex-col gap-4 mb-8">
           <div
-              v-for="entry in sortedResults"
+              v-for="(entry, idx) in sortedResults"
               :key="entry.name"
-              class="flex items-center gap-4 p-2 rounded-xl"
+              class="flex items-center gap-3 sm:gap-4 p-2.5 rounded-xl transition-transform hover:translate-x-0.5"
               style="background: var(--c-surface, rgba(255,255,255,0.03))"
           >
+            <!-- Rank badge -->
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0"
+                 :class="{
+                   'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm': idx === 0 && entry.score > 0,
+                   'bg-slate-300/20 text-slate-200 border border-slate-300/30': idx === 1 && entry.score > 0,
+                   'bg-amber-700/20 text-amber-400 border border-amber-700/30': idx === 2 && entry.score > 0,
+                   'text-muted bg-white/5': idx > 2 || entry.score <= 0
+                 }">
+              {{ idx === 0 && entry.score > 0 ? '🥇' : idx === 1 && entry.score > 0 ? '🥈' : idx === 2 && entry.score > 0 ? '🥉' : `#${idx + 1}` }}
+            </div>
+
             <!-- Game thumbnail -->
             <img
                 v-if="entry.imageUrl"
@@ -119,7 +130,8 @@ const sortedResults = computed(() => {
     }
   })
 
-  return results
+  // Sort by score descending (highest votes first), tie-breaking alphabetically
+  return results.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
 })
 
 const maxScore = computed(() =>
@@ -133,8 +145,11 @@ function barWidth(score: number) {
 function renderPieChart() {
   if (!pieChartEl.value || !currentRoundResults.value) return
   const resultsObj = currentRoundResults.value
-  const labels = Object.keys(resultsObj)
-  const data = Object.values(resultsObj).map(v => Math.max(0, v as number))
+  
+  // Sort pie chart entries by score descending as well
+  const sortedEntries = Object.entries(resultsObj).sort((a, b) => (b[1] as number) - (a[1] as number))
+  const labels = sortedEntries.map(([k]) => k)
+  const data = sortedEntries.map(([, v]) => Math.max(0, v as number))
 
   if (pieChart) pieChart.destroy()
   pieChart = new Chart(pieChartEl.value, {

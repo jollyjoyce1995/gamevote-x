@@ -49,12 +49,16 @@ CREATE TABLE IF NOT EXISTS ballots (
 );
 
 CREATE TABLE IF NOT EXISTS beers (
-    id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    party_code text NOT NULL,
-    attendee   text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now(),
+    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    party_code      text NOT NULL,
+    attendee        text NOT NULL,
+    drink_name      text NOT NULL DEFAULT 'Beer',
+    beer_equivalent real NOT NULL DEFAULT 1.0,
+    created_at      timestamptz NOT NULL DEFAULT now(),
     FOREIGN KEY (party_code, attendee) REFERENCES attendees ON DELETE CASCADE
 );
+ALTER TABLE beers ADD COLUMN IF NOT EXISTS drink_name text NOT NULL DEFAULT 'Beer';
+ALTER TABLE beers ADD COLUMN IF NOT EXISTS beer_equivalent real NOT NULL DEFAULT 1.0;
 CREATE INDEX IF NOT EXISTS beers_party ON beers (party_code);
 
 -- Default presets, only when the table is empty.

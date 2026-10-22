@@ -55,13 +55,14 @@ func (s *Store) GetParty(ctx context.Context, code string) (*api.Party, error) {
 }
 
 func loadParty(ctx context.Context, q querier, code string) (*api.Party, error) {
-	// A pipelined batch: five small queries, one network round trip.
+	// A pipelined batch: six small queries, one network round trip.
 	b := &pgx.Batch{}
 	b.Queue(`SELECT status, current_round, created_at FROM parties WHERE code = $1`, code)
 	b.Queue(`SELECT username FROM attendees WHERE party_code = $1 ORDER BY joined_at, username`, code)
 	b.Queue(`SELECT name, app_id, image_url FROM options WHERE party_code = $1 ORDER BY created_at, name`, code)
 	b.Queue(`SELECT attendee, count(*) FROM beers WHERE party_code = $1 GROUP BY attendee`, code)
 	b.Queue(`SELECT round, username, choices FROM ballots WHERE party_code = $1`, code)
+	b.Queue(`SELECT id, attendee, drink_name, beer_equivalent, created_at FROM beers WHERE party_code = $1 ORDER BY created_at ASC, id ASC`, code)
 
 	res := q.SendBatch(ctx, b)
 	defer res.Close()
@@ -73,6 +74,7 @@ func loadParty(ctx context.Context, q querier, code string) (*api.Party, error) 
 		PendingVoters:   []string{},
 		RoundResults:    map[string]map[string]int{},
 		BeerPerAttendee: map[string]int{},
+		BeerLog:         []api.BeerEntry{},
 	}
 	if err := res.QueryRow().Scan(&p.Status, &p.CurrentRound, &p.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -168,6 +170,23 @@ func loadParty(ctx context.Context, q querier, code string) (*api.Party, error) 
 		if round == p.CurrentRound {
 			voted[user] = true
 		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	rows, err = res.Query()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var e api.BeerEntry
+		if err := rows.Scan(&e.Id, &e.Attendee, &e.DrinkName, &e.BeerEquivalent, &e.CreatedAt); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		p.BeerLog = append(p.BeerLog, e)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
@@ -405,8 +424,14 @@ func (s *Store) SubmitVotes(ctx context.Context, code, username string, votes ap
 	})
 }
 
-func (s *Store) AddBeer(ctx context.Context, code, attendee string) error {
-	_, err := s.pool.Exec(ctx, `INSERT INTO beers (party_code, attendee) VALUES ($1, $2)`, code, attendee)
+func (s *Store) AddBeer(ctx context.Context, code, attendee, drinkName string, beerEquivalent float32) error {
+	if drinkName == "" {
+		drinkName = "Beer"
+	}
+	if beerEquivalent <= 0 {
+		beerEquivalent = 1.0
+	}
+	_, err := s.pool.Exec(ctx, `INSERT INTO beers (party_code, attendee, drink_name, beer_equivalent) VALUES ($1, $2, $3, $4)`, code, attendee, drinkName, beerEquivalent)
 	if pgCode(err) == codeForeignKey {
 		var exists bool
 		if qerr := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM parties WHERE code = $1)`, code).Scan(&exists); qerr != nil {
