@@ -1,23 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { ServicePartyDto as PartyDTO } from '@/generated-api'
+import type { Party } from '@/generated-api'
 
 export const usePartyStore = defineStore('party', () => {
-    const party = ref<PartyDTO | null>(null)
+    const party = ref<Party | null>(null)
     const onlineUsers = ref<string[]>([])
-    const outstandingVoters = ref<string[]>([])
     let eventSource: EventSource | null = null
 
-    function setParty(p: PartyDTO) {
+    function setParty(p: Party) {
         party.value = p
     }
 
     function setOnlineUsers(users: string[]) {
         onlineUsers.value = users
-    }
-
-    function setOutstandingVoters(users: string[]) {
-        outstandingVoters.value = users
     }
 
     function setEventSource(es: EventSource | null) {
@@ -31,8 +26,7 @@ export const usePartyStore = defineStore('party', () => {
         }
         party.value = null
         onlineUsers.value = []
-        outstandingVoters.value = []
     }
 
-    return { party, onlineUsers, outstandingVoters, setParty, setOnlineUsers, setOutstandingVoters, setEventSource, closeStream }
+    return { party, onlineUsers, setParty, setOnlineUsers, setEventSource, closeStream }
 })

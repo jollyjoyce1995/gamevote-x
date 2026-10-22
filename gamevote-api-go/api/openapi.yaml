@@ -1,0 +1,426 @@
+openapi: 3.0.3
+info:
+  title: GameVote API
+  version: 2.0.0
+  description: |
+    API for GameVote. This file is the single source of truth: the Go server
+    stubs and the TypeScript client are both generated from it.
+
+    Identity is a plain username (no passwords) - this is meant for a small,
+    trusted group of friends.
+
+    Mutations return 204 unless they return the new state. Live updates are
+    pushed over the `streamParty` SSE endpoint.
+servers:
+  - url: /api
+
+paths:
+  /login:
+    post:
+      operationId: login
+      summary: Log in, registering the username if it is new
+      description: Idempotent. Also used on app start to check that a stored username is still valid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /users:
+    get:
+      operationId: listUsers
+      summary: List all registered users
+      responses:
+        '200':
+          description: Users, ordered by username
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /drinks:
+    get:
+      operationId: listDrinks
+      summary: List drink presets
+      responses:
+        '200':
+          description: Drink presets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DrinkType' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createDrink
+      summary: Add a custom drink preset
+      description: If `beerEquivalent` is omitted or 0 it is derived from volume and alcohol percentage.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewDrinkType' }
+      responses:
+        '200':
+          description: The created preset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DrinkType' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /games:
+    get:
+      operationId: searchGames
+      summary: Search the Steam store by name
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: Matching games
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Game' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties:
+    get:
+      operationId: listParties
+      summary: List parties, newest first
+      responses:
+        '200':
+          description: Party summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PartySummary' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createParty
+      summary: Create a party with a generated 6-character code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePartyRequest' }
+      responses:
+        '200':
+          description: The created party
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Party' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+    get:
+      operationId: getParty
+      summary: Get the full state of a party
+      responses:
+        '200':
+          description: The party
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Party' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/status:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+    put:
+      operationId: setPartyStatus
+      summary: Move the party to another phase
+      description: |
+        Allowed transitions:
+        NOMINATION -> VOTING (needs at least one option),
+        VOTING -> NOMINATION, VOTING -> RESULTS,
+        RESULTS -> NOMINATION (starts the next round).
+        The party also moves VOTING -> RESULTS by itself once everybody has voted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetStatusRequest' }
+      responses:
+        '200':
+          description: The updated party
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Party' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/attendees/{username}:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+      - $ref: '#/components/parameters/Username'
+    put:
+      operationId: joinParty
+      summary: Add a user to the party (idempotent)
+      responses:
+        '200':
+          description: The updated party
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Party' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/options:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+    post:
+      operationId: addOption
+      summary: Nominate a game (only during NOMINATION)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PartyOption' }
+      responses:
+        '204': { description: Added }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/options/{name}:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+      - name: name
+        in: path
+        required: true
+        schema: { type: string }
+    delete:
+      operationId: removeOption
+      summary: Remove a nominated game (only during NOMINATION)
+      responses:
+        '204': { description: Removed }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/votes/{username}:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+      - $ref: '#/components/parameters/Username'
+    put:
+      operationId: submitVotes
+      summary: Submit (or replace) a user's votes for the current round
+      description: Only during VOTING. Options missing from the body count as 0.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Votes' }
+      responses:
+        '204': { description: Recorded }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/beers:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+    post:
+      operationId: addBeer
+      summary: Count one more beer for an attendee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddBeerRequest' }
+      responses:
+        '204': { description: Counted }
+        default: { $ref: '#/components/responses/Error' }
+
+  /parties/{code}/stream:
+    parameters:
+      - $ref: '#/components/parameters/Code'
+    get:
+      operationId: streamParty
+      summary: Server-Sent Events stream for live party updates
+      description: |
+        Events (`data` is JSON):
+        - `party_updated` - a full `Party`, sent on connect and after every change
+        - `online_users` - `string[]` of usernames currently connected
+
+        Use the browser `EventSource` with the URL of this endpoint.
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+        default: { $ref: '#/components/responses/Error' }
+
+components:
+  parameters:
+    Code:
+      name: code
+      in: path
+      required: true
+      schema: { type: string }
+    Username:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+
+    PartyStatus:
+      type: string
+      enum: [NOMINATION, VOTING, RESULTS]
+
+    LoginRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 32 }
+
+    User:
+      type: object
+      required: [username, createdAt, lastLogin]
+      properties:
+        username: { type: string }
+        createdAt: { type: string, format: date-time }
+        lastLogin: { type: string, format: date-time }
+
+    Game:
+      type: object
+      required: [appId, name, imageUrl]
+      properties:
+        appId: { type: integer }
+        name: { type: string }
+        imageUrl: { type: string }
+
+    PartyOption:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        appId: { type: integer, description: Steam app id, absent for custom entries }
+        imageUrl: { type: string }
+
+    NewDrinkType:
+      type: object
+      required: [name, volumeMl, alcoholPercent, unitName]
+      properties:
+        name: { type: string }
+        volumeMl: { type: integer, minimum: 1 }
+        alcoholPercent: { type: number, format: float, minimum: 0, maximum: 100 }
+        beerEquivalent: { type: number, format: float, minimum: 0 }
+        unitName: { type: string }
+
+    DrinkType:
+      type: object
+      required: [id, name, volumeMl, alcoholPercent, beerEquivalent, unitName]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        volumeMl: { type: integer }
+        alcoholPercent: { type: number, format: float }
+        beerEquivalent: { type: number, format: float, description: How many 0.5l beers this drink equals }
+        unitName: { type: string }
+
+    CreatePartyRequest:
+      type: object
+      properties:
+        attendees:
+          type: array
+          description: Usernames to add right away. They must be registered.
+          items: { type: string }
+
+    SetStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/PartyStatus' }
+
+    AddBeerRequest:
+      type: object
+      required: [attendee]
+      properties:
+        attendee: { type: string }
+
+    Votes:
+      type: object
+      description: Option name to vote, one of -1, 0 or 1
+      additionalProperties:
+        type: integer
+        minimum: -1
+        maximum: 1
+
+    PartySummary:
+      type: object
+      required: [code, status, createdAt, attendeeCount, optionCount, beerCount]
+      properties:
+        code: { type: string }
+        status: { $ref: '#/components/schemas/PartyStatus' }
+        createdAt: { type: string, format: date-time }
+        attendeeCount: { type: integer }
+        optionCount: { type: integer }
+        beerCount: { type: integer }
+
+    Party:
+      type: object
+      required:
+        - code
+        - status
+        - currentRound
+        - createdAt
+        - attendees
+        - options
+        - pendingVoters
+        - roundResults
+        - beerCount
+        - beerPerAttendee
+      properties:
+        code: { type: string }
+        status: { $ref: '#/components/schemas/PartyStatus' }
+        currentRound: { type: integer }
+        createdAt: { type: string, format: date-time }
+        attendees:
+          type: array
+          items: { type: string }
+        options:
+          type: array
+          items: { $ref: '#/components/schemas/PartyOption' }
+        pendingVoters:
+          type: array
+          description: Attendees that have not voted yet in the current round. Empty outside VOTING.
+          items: { type: string }
+        roundResults:
+          type: object
+          description: Round number (as string) to option name to summed score
+          additionalProperties:
+            type: object
+            additionalProperties: { type: integer }
+        beerCount: { type: integer }
+        beerPerAttendee:
+          type: object
+          additionalProperties: { type: integer }

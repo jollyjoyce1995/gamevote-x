@@ -86,18 +86,14 @@ const availableRounds = computed(() => {
 })
 
 watch(() => party.value?.currentRound, (newVal) => {
-  if (selectedRound.value === null && newVal) {
-    selectedRound.value = newVal
-  }
+  // Follow the party into each new round
+  if (newVal) selectedRound.value = newVal
 }, {immediate: true})
 
 const currentRoundResults = computed(() => {
   if (!party.value) return {}
   const round = selectedRound.value || party.value.currentRound || 1
-  if (party.value.roundResults && party.value.roundResults[round]) {
-    return party.value.roundResults[round]
-  }
-  return party.value.results || {}
+  return party.value.roundResults[round] ?? {}
 })
 
 const sortedResults = computed(() => {

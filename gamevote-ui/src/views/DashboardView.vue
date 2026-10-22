@@ -42,23 +42,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getParties } from '@/api-client'
-import type { ServicePartyDto as PartyDTO } from '@/generated-api'
+import { listParties } from '@/api-client'
+import type { PartySummary } from '@/generated-api'
 import PartyCard from '@/components/PartyCard.vue'
 
-const parties = ref<PartyDTO[]>([])
+const parties = ref<PartySummary[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const res = await getParties()
-    const data = (res.data as PartyDTO[]) || []
-    // Sort newest first by createdAt
-    parties.value = data.sort((a, b) => {
-      const da = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0
-      const db = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0
-      return db - da
-    })
+    // The server returns them newest first
+    parties.value = (await listParties()).data ?? []
   } finally {
     loading.value = false
   }

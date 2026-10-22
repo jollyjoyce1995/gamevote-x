@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreatePartyData, CreatePartyResponses, DeleteAttendeeData, DeleteAttendeeResponses, DeleteOptionData, DeleteOptionResponses, GetDrinkTypesData, GetDrinkTypesResponses, GetPartiesData, GetPartiesResponses, GetPartyData, GetPartyResponses, GetUsersData, GetUsersResponses, LoginData, LoginResponses, PatchPartyData, PatchPartyResponses, PostAttendeeData, PostAttendeeResponses, PostBeerData, PostBeerResponses, PostDrinkTypeData, PostDrinkTypeResponses, PostNextRoundData, PostNextRoundResponses, PostOptionData, PostOptionResponses, PostVoteData, PostVoteResponses, SearchGamesData, SearchGamesResponses, StreamPartyData, StreamPartyResponses, ValidateUserData, ValidateUserErrors, ValidateUserResponses } from './types.gen';
+import type { AddBeerData, AddBeerErrors, AddBeerResponses, AddOptionData, AddOptionErrors, AddOptionResponses, CreateDrinkData, CreateDrinkErrors, CreateDrinkResponses, CreatePartyData, CreatePartyErrors, CreatePartyResponses, GetPartyData, GetPartyErrors, GetPartyResponses, JoinPartyData, JoinPartyErrors, JoinPartyResponses, ListDrinksData, ListDrinksErrors, ListDrinksResponses, ListPartiesData, ListPartiesErrors, ListPartiesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, RemoveOptionData, RemoveOptionErrors, RemoveOptionResponses, SearchGamesData, SearchGamesErrors, SearchGamesResponses, SetPartyStatusData, SetPartyStatusErrors, SetPartyStatusResponses, StreamPartyData, StreamPartyErrors, StreamPartyResponses, SubmitVotesData, SubmitVotesErrors, SubmitVotesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -19,19 +19,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Get preset drinks
+ * Log in, registering the username if it is new
  *
- * Get a list of all preset drinks
+ * Idempotent. Also used on app start to check that a stored username is still valid.
  */
-export const getDrinkTypes = <ThrowOnError extends boolean = false>(options?: Options<GetDrinkTypesData, ThrowOnError>) => (options?.client ?? client).get<GetDrinkTypesResponses, unknown, ThrowOnError>({ url: '/drinks/presets', ...options });
-
-/**
- * Add custom drink preset
- *
- * Create a new custom drink preset saving it to the database
- */
-export const postDrinkType = <ThrowOnError extends boolean = false>(options: Options<PostDrinkTypeData, ThrowOnError>) => (options.client ?? client).post<PostDrinkTypeResponses, unknown, ThrowOnError>({
-    url: '/drinks/presets',
+export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>) => (options.client ?? client).post<LoginResponses, LoginErrors, ThrowOnError>({
+    url: '/login',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -40,25 +33,43 @@ export const postDrinkType = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * Search games
- *
- * Search the cached Steam game list by name
+ * List all registered users
  */
-export const searchGames = <ThrowOnError extends boolean = false>(options: Options<SearchGamesData, ThrowOnError>) => (options.client ?? client).get<SearchGamesResponses, unknown, ThrowOnError>({ url: '/games', ...options });
+export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>) => (options?.client ?? client).get<ListUsersResponses, ListUsersErrors, ThrowOnError>({ url: '/users', ...options });
 
 /**
- * Get all parties
- *
- * Get all parties ordered by ID
+ * List drink presets
  */
-export const getParties = <ThrowOnError extends boolean = false>(options?: Options<GetPartiesData, ThrowOnError>) => (options?.client ?? client).get<GetPartiesResponses, unknown, ThrowOnError>({ url: '/parties', ...options });
+export const listDrinks = <ThrowOnError extends boolean = false>(options?: Options<ListDrinksData, ThrowOnError>) => (options?.client ?? client).get<ListDrinksResponses, ListDrinksErrors, ThrowOnError>({ url: '/drinks', ...options });
 
 /**
- * Create a new party
+ * Add a custom drink preset
  *
- * Creates a new party with a generated 6-character code
+ * If `beerEquivalent` is omitted or 0 it is derived from volume and alcohol percentage.
  */
-export const createParty = <ThrowOnError extends boolean = false>(options: Options<CreatePartyData, ThrowOnError>) => (options.client ?? client).post<CreatePartyResponses, unknown, ThrowOnError>({
+export const createDrink = <ThrowOnError extends boolean = false>(options: Options<CreateDrinkData, ThrowOnError>) => (options.client ?? client).post<CreateDrinkResponses, CreateDrinkErrors, ThrowOnError>({
+    url: '/drinks',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Search the Steam store by name
+ */
+export const searchGames = <ThrowOnError extends boolean = false>(options: Options<SearchGamesData, ThrowOnError>) => (options.client ?? client).get<SearchGamesResponses, SearchGamesErrors, ThrowOnError>({ url: '/games', ...options });
+
+/**
+ * List parties, newest first
+ */
+export const listParties = <ThrowOnError extends boolean = false>(options?: Options<ListPartiesData, ThrowOnError>) => (options?.client ?? client).get<ListPartiesResponses, ListPartiesErrors, ThrowOnError>({ url: '/parties', ...options });
+
+/**
+ * Create a party with a generated 6-character code
+ */
+export const createParty = <ThrowOnError extends boolean = false>(options: Options<CreatePartyData, ThrowOnError>) => (options.client ?? client).post<CreatePartyResponses, CreatePartyErrors, ThrowOnError>({
     url: '/parties',
     ...options,
     headers: {
@@ -68,19 +79,22 @@ export const createParty = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * Get a party
- *
- * Get a party by its code
+ * Get the full state of a party
  */
-export const getParty = <ThrowOnError extends boolean = false>(options: Options<GetPartyData, ThrowOnError>) => (options.client ?? client).get<GetPartyResponses, unknown, ThrowOnError>({ url: '/parties/{code}', ...options });
+export const getParty = <ThrowOnError extends boolean = false>(options: Options<GetPartyData, ThrowOnError>) => (options.client ?? client).get<GetPartyResponses, GetPartyErrors, ThrowOnError>({ url: '/parties/{code}', ...options });
 
 /**
- * Patch a party
+ * Move the party to another phase
  *
- * Update a party status
+ * Allowed transitions:
+ * NOMINATION -> VOTING (needs at least one option),
+ * VOTING -> NOMINATION, VOTING -> RESULTS,
+ * RESULTS -> NOMINATION (starts the next round).
+ * The party also moves VOTING -> RESULTS by itself once everybody has voted.
+ *
  */
-export const patchParty = <ThrowOnError extends boolean = false>(options: Options<PatchPartyData, ThrowOnError>) => (options.client ?? client).patch<PatchPartyResponses, unknown, ThrowOnError>({
-    url: '/parties/{code}',
+export const setPartyStatus = <ThrowOnError extends boolean = false>(options: Options<SetPartyStatusData, ThrowOnError>) => (options.client ?? client).put<SetPartyStatusResponses, SetPartyStatusErrors, ThrowOnError>({
+    url: '/parties/{code}/status',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -89,53 +103,14 @@ export const patchParty = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * Add an attendee
- *
- * Add an attendee to a party
+ * Add a user to the party (idempotent)
  */
-export const postAttendee = <ThrowOnError extends boolean = false>(options: Options<PostAttendeeData, ThrowOnError>) => (options.client ?? client).post<PostAttendeeResponses, unknown, ThrowOnError>({
-    url: '/parties/{code}/attendees',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
+export const joinParty = <ThrowOnError extends boolean = false>(options: Options<JoinPartyData, ThrowOnError>) => (options.client ?? client).put<JoinPartyResponses, JoinPartyErrors, ThrowOnError>({ url: '/parties/{code}/attendees/{username}', ...options });
 
 /**
- * Delete an attendee
- *
- * Delete an attendee from a party by index
+ * Nominate a game (only during NOMINATION)
  */
-export const deleteAttendee = <ThrowOnError extends boolean = false>(options: Options<DeleteAttendeeData, ThrowOnError>) => (options.client ?? client).delete<DeleteAttendeeResponses, unknown, ThrowOnError>({ url: '/parties/{code}/attendees/{attendeeId}', ...options });
-
-/**
- * Add a beer
- *
- * Add a beer for an attendee in a party
- */
-export const postBeer = <ThrowOnError extends boolean = false>(options: Options<PostBeerData, ThrowOnError>) => (options.client ?? client).post<PostBeerResponses, unknown, ThrowOnError>({
-    url: '/parties/{code}/beers',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Raise the round
- *
- * Start the next round for a party
- */
-export const postNextRound = <ThrowOnError extends boolean = false>(options: Options<PostNextRoundData, ThrowOnError>) => (options.client ?? client).post<PostNextRoundResponses, unknown, ThrowOnError>({ url: '/parties/{code}/next-round', ...options });
-
-/**
- * Add an option
- *
- * Add an option to a party
- */
-export const postOption = <ThrowOnError extends boolean = false>(options: Options<PostOptionData, ThrowOnError>) => (options.client ?? client).post<PostOptionResponses, unknown, ThrowOnError>({
+export const addOption = <ThrowOnError extends boolean = false>(options: Options<AddOptionData, ThrowOnError>) => (options.client ?? client).post<AddOptionResponses, AddOptionErrors, ThrowOnError>({
     url: '/parties/{code}/options',
     ...options,
     headers: {
@@ -145,26 +120,17 @@ export const postOption = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * Delete an option
- *
- * Delete an option from a party by its name
+ * Remove a nominated game (only during NOMINATION)
  */
-export const deleteOption = <ThrowOnError extends boolean = false>(options: Options<DeleteOptionData, ThrowOnError>) => (options.client ?? client).delete<DeleteOptionResponses, unknown, ThrowOnError>({ url: '/parties/{code}/options/{gameName}', ...options });
+export const removeOption = <ThrowOnError extends boolean = false>(options: Options<RemoveOptionData, ThrowOnError>) => (options.client ?? client).delete<RemoveOptionResponses, RemoveOptionErrors, ThrowOnError>({ url: '/parties/{code}/options/{name}', ...options });
 
 /**
- * SSE stream for a party
+ * Submit (or replace) a user's votes for the current round
  *
- * Opens a Server-Sent Events stream for real-time party updates
+ * Only during VOTING. Options missing from the body count as 0.
  */
-export const streamParty = <ThrowOnError extends boolean = false>(options: Options<StreamPartyData, ThrowOnError>) => (options.client ?? client).sse.get<StreamPartyResponses, unknown, ThrowOnError>({ url: '/parties/{code}/stream', ...options });
-
-/**
- * Submit a vote
- *
- * Submit a vote for an attendee
- */
-export const postVote = <ThrowOnError extends boolean = false>(options: Options<PostVoteData, ThrowOnError>) => (options.client ?? client).post<PostVoteResponses, unknown, ThrowOnError>({
-    url: '/parties/{code}/votes/{attendee}',
+export const submitVotes = <ThrowOnError extends boolean = false>(options: Options<SubmitVotesData, ThrowOnError>) => (options.client ?? client).put<SubmitVotesResponses, SubmitVotesErrors, ThrowOnError>({
+    url: '/parties/{code}/votes/{username}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -173,19 +139,10 @@ export const postVote = <ThrowOnError extends boolean = false>(options: Options<
 });
 
 /**
- * Get all users
- *
- * Returns a list of all registered users.
+ * Count one more beer for an attendee
  */
-export const getUsers = <ThrowOnError extends boolean = false>(options?: Options<GetUsersData, ThrowOnError>) => (options?.client ?? client).get<GetUsersResponses, unknown, ThrowOnError>({ url: '/users', ...options });
-
-/**
- * Login or Register a User
- *
- * Logs in a user by username. If they do not exist, they are created.
- */
-export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>) => (options.client ?? client).post<LoginResponses, unknown, ThrowOnError>({
-    url: '/users',
+export const addBeer = <ThrowOnError extends boolean = false>(options: Options<AddBeerData, ThrowOnError>) => (options.client ?? client).post<AddBeerResponses, AddBeerErrors, ThrowOnError>({
+    url: '/parties/{code}/beers',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -194,8 +151,13 @@ export const login = <ThrowOnError extends boolean = false>(options: Options<Log
 });
 
 /**
- * Validate if a user exists
+ * Server-Sent Events stream for live party updates
  *
- * Check if a user exists in the database by username
+ * Events (`data` is JSON):
+ * - `party_updated` - a full `Party`, sent on connect and after every change
+ * - `online_users` - `string[]` of usernames currently connected
+ *
+ * Use the browser `EventSource` with the URL of this endpoint.
+ *
  */
-export const validateUser = <ThrowOnError extends boolean = false>(options: Options<ValidateUserData, ThrowOnError>) => (options.client ?? client).get<ValidateUserResponses, ValidateUserErrors, ThrowOnError>({ url: '/users/{username}', ...options });
+export const streamParty = <ThrowOnError extends boolean = false>(options: Options<StreamPartyData, ThrowOnError>) => (options.client ?? client).sse.get<StreamPartyResponses, StreamPartyErrors, ThrowOnError>({ url: '/parties/{code}/stream', ...options });

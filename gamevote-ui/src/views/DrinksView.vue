@@ -93,8 +93,8 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { getParty, getDrinkTypes, postDrinkType, postBeer } from '@/api-client'
-import type { ModelsDrinkType as DrinkType, ServicePartyDto as PartyDTO } from '@/generated-api'
+import { getParty, listDrinks, createDrink, addBeer } from '@/api-client'
+import type { DrinkType, Party } from '@/generated-api'
 import { Chart, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, BarController, LineController } from 'chart.js'
 Chart.register(BarElement, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, BarController, LineController)
 
@@ -102,7 +102,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const code = computed(() => route.params.code as string)
 
-const party = ref<PartyDTO | null>(null)
+const party = ref<Party | null>(null)
 const attendees = computed(() => party.value?.attendees ?? [])
 const selectedAttendee = ref(authStore.username ?? '')
 const presets = ref<DrinkType[]>([])
@@ -131,7 +131,7 @@ function drinkEmoji(name: string) {
 async function logDrink(dt: DrinkType) {
   const attendee = selectedAttendee.value
   if (!attendee) return
-  await postBeer({ path: { code: code.value }, body: { attendee } }).catch(() => {})
+  await addBeer({ path: { code: code.value }, body: { attendee } }).catch(() => {})
   log.value.push({
     attendee,
     name: dt.name || 'Unknown',
@@ -147,17 +147,21 @@ async function addCustomDrink() {
   if (!custom.value.name) return
   const pureAlcohol = custom.value.volumeMl * (custom.value.alcoholPercent / 100)
   const beerEq = parseFloat((pureAlcohol / 25).toFixed(2))
-  const newDt: Omit<DrinkType, 'id'> = {
-    name: custom.value.name,
-    volumeMl: custom.value.volumeMl,
-    alcoholPercent: custom.value.alcoholPercent,
-    beerEquivalent: beerEq,
-    unitName: custom.value.unitName,
+  const savedResp = await createDrink({
+    body: {
+      name: custom.value.name,
+      volumeMl: custom.value.volumeMl,
+      alcoholPercent: custom.value.alcoholPercent,
+      beerEquivalent: beerEq,
+      unitName: custom.value.unitName,
+    },
+  })
+  if (!savedResp.data) {
+    alert(savedResp.error?.error || 'Could not save the drink')
+    return
   }
-  const savedResp = await postDrinkType({ body: newDt as any }).catch(() => ({ data: { ...newDt, id: Date.now().toString() } }))
-  const saved = savedResp.data as DrinkType
-  presets.value.push(saved)
-  await logDrink(saved)
+  presets.value.push(savedResp.data)
+  await logDrink(savedResp.data)
   custom.value = { name: '', volumeMl: 500, alcoholPercent: 5, unitName: 'custom' }
 }
 
@@ -242,23 +246,22 @@ function renderCharts() {
 onMounted(async () => {
   const [pResp, dtsResp] = await Promise.all([
     getParty({ path: { code: code.value } }).catch(() => null),
-    getDrinkTypes().catch(() => ({ data: [] }))
+    listDrinks().catch(() => ({ data: [] }))
   ])
   const p = pResp?.data
   if (p) {
-    party.value = p as PartyDTO
-    if (!selectedAttendee.value && p.attendees?.length) {
+    party.value = p
+    if (!selectedAttendee.value && p.attendees.length) {
       selectedAttendee.value = p.attendees[0] as string
     }
     // Prefill log from beer counts (without time)
-    for (const [attendee, count] of Object.entries(p.beerPerAttendee || {})) {
+    for (const [attendee, count] of Object.entries(p.beerPerAttendee)) {
       for (let i = 0; i < count; i++) {
         log.value.push({ attendee, name: 'Beer', beers: 1, time: '?', ts: 0 })
       }
     }
   }
-  presets.value = dtsResp?.data as DrinkType[] || []
-  loadingPresets.value = false
+  presets.value = dtsResp?.data ?? []
   loadingPresets.value = false
   await nextTick()
   renderCharts()

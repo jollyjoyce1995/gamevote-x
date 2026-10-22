@@ -1,0 +1,78 @@
+# GameVote: Go server (serves the Vue app too) + a Postgres tuned for a tiny
+# workload. Expected footprint: ~25-40 MB for Postgres, ~15-25 MB for the app.
+#
+#   docker compose up -d --build        -> http://localhost:8080
+#   docker compose up -d db             -> only the database (for local development)
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gamevote
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gamevote}
+      POSTGRES_DB: gamevote
+    # Defaults are sized for big servers; these fit a handful of users.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=16MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=16MB
+      - -c
+      - autovacuum_work_mem=16MB
+      - -c
+      - autovacuum_max_workers=2
+      - -c
+      - effective_cache_size=64MB
+      - -c
+      - wal_buffers=1MB
+      - -c
+      - min_wal_size=32MB
+      - -c
+      - max_wal_size=128MB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - max_wal_senders=0
+      - -c
+      - max_worker_processes=2
+      - -c
+      - max_parallel_workers=0
+      - -c
+      - max_parallel_workers_per_gather=0
+      - -c
+      - max_parallel_maintenance_workers=0
+      - -c
+      - jit=off
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432" # local development only, not exposed to the network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gamevote -d gamevote"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 128m
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # If you change the password to something with special characters, URL-encode it here.
+      DATABASE_URL: postgres://gamevote:${POSTGRES_PASSWORD:-gamevote}@db:5432/gamevote?sslmode=disable
+      GOMEMLIMIT: 48MiB
+    ports:
+      - "8080:8080"
+    mem_limit: 64m
+
+volumes:
+  pgdata:

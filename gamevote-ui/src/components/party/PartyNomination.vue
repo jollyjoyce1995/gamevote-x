@@ -48,9 +48,9 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePartyStore } from '@/stores/party'
-import { searchGames, postOption, deleteOption } from '@/api-client'
+import { searchGames, addOption, removeOption as apiRemoveOption } from '@/api-client'
 import GameItem from '@/components/party/GameItem.vue'
-import type {ModelsGame} from "@/generated-api";
+import type {Game} from "@/generated-api";
 
 const route = useRoute()
 const partyStore = usePartyStore()
@@ -59,7 +59,7 @@ const code = computed(() => route.params.code as string)
 const party = computed(() => partyStore.party)
 
 const gameSearch = ref('')
-const suggestions = ref<ModelsGame[]>([])
+const suggestions = ref<Game[]>([])
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 function onSearchInput() {
@@ -71,7 +71,7 @@ function onSearchInput() {
   }, 300)
 }
 
-async function pickGame(item: ModelsGame | string) {
+async function pickGame(item: Game | string) {
   const name = typeof item === 'string' ? item.trim() : item.name
   if (!name) return
 
@@ -89,7 +89,7 @@ async function pickGame(item: ModelsGame | string) {
   suggestions.value = []
   
   try {
-    await postOption({
+    await addOption({
       path: { code: code.value },
       body: option
     })
@@ -107,8 +107,8 @@ async function submitCustomGame() {
 async function removeOption(name: string) {
   if (!name) return
 
-  await deleteOption({
-      path: { code: code.value, gameName: name }
+  await apiRemoveOption({
+      path: { code: code.value, name }
   }).catch((e: any) => {
     console.error('Failed to remove option:', e)
   })

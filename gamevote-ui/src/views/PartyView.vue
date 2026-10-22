@@ -91,8 +91,8 @@ import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 import {RouterLink, useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {usePartyStore} from '@/stores/party'
-import { patchParty, getParty, postAttendee, postNextRound, client } from '@/api-client'
-import type {ServicePartyDto as PartyDTO} from '@/generated-api'
+import { setPartyStatus, getParty, joinParty, client } from '@/api-client'
+import type {Party} from '@/generated-api'
 
 import PartyNomination from '@/components/party/PartyNomination.vue'
 import PartyVoting from '@/components/party/PartyVoting.vue'
@@ -144,15 +144,11 @@ function connectSSE() {
   partyStore.setEventSource(es as any)
 
   es.addEventListener('party_updated', (e: MessageEvent) => {
-    partyStore.setParty(JSON.parse(e.data) as PartyDTO)
+    partyStore.setParty(JSON.parse(e.data) as Party)
   })
 
   es.addEventListener('online_users', (e: MessageEvent) => {
     partyStore.setOnlineUsers(JSON.parse(e.data) as string[])
-  })
-
-  es.addEventListener('outstanding_voters_updated', (e: MessageEvent) => {
-    partyStore.setOutstandingVoters(JSON.parse(e.data) as string[])
   })
 
   es.onerror = () => {
@@ -165,11 +161,11 @@ async function advance(nextStatus: 'VOTING' | 'RESULTS') {
   if (!party.value) return
   advancing.value = true
   try {
-    const updated = await patchParty({
+    const updated = await setPartyStatus({
       path: { code: code.value },
       body: { status: nextStatus }
     })
-    partyStore.setParty(updated.data as PartyDTO)
+    if (updated.data) partyStore.setParty(updated.data)
     activeTab.value = nextStatus
   } finally {
     advancing.value = false
@@ -181,10 +177,11 @@ async function newRound() {
   if (!party.value) return
   restarting.value = true
   try {
-    const updated = await postNextRound({
-      path: { code: code.value }
+    const updated = await setPartyStatus({
+      path: { code: code.value },
+      body: { status: 'NOMINATION' }
     })
-    partyStore.setParty(updated.data as PartyDTO)
+    if (updated.data) partyStore.setParty(updated.data)
     activeTab.value = 'NOMINATION'
   } finally {
     restarting.value = false
@@ -195,17 +192,15 @@ async function newRound() {
 onMounted(async () => {
   try {
     const pReq = await getParty({ path: { code: code.value } })
-    let p = pReq.data as PartyDTO;
+    if (!pReq.data) throw new Error(pReq.error?.error || 'Party not found')
+    let p = pReq.data
 
-    // Auto-join logic
-    if (authStore.username && (!p.attendees || !p.attendees.includes(authStore.username))) {
-      await postAttendee({
-        path: { code: code.value },
-        body: { value: authStore.username }
+    // Auto-join (idempotent); the response is the updated party
+    if (authStore.username && !p.attendees.includes(authStore.username)) {
+      const joined = await joinParty({
+        path: { code: code.value, username: authStore.username }
       })
-      // re-fetch party to get the updated attendees list immediately
-      const p2 = await getParty({ path: { code: code.value } })
-      p = p2.data as PartyDTO;
+      if (joined.data) p = joined.data
     }
 
     partyStore.setParty(p)
