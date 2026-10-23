@@ -146,7 +146,11 @@ func (s *Server) AddBeer(ctx context.Context, req api.AddBeerRequestObject) (api
 	if req.Body.BeerEquivalent != nil && *req.Body.BeerEquivalent > 0 {
 		beerEq = *req.Body.BeerEquivalent
 	}
-	if err := s.store.AddBeer(ctx, code, strings.TrimSpace(req.Body.Attendee), drinkName, beerEq); err != nil {
+	attendee := strings.TrimSpace(req.Body.Attendee)
+	if err := s.store.AddAttendee(ctx, code, attendee); err != nil {
+		return nil, err
+	}
+	if err := s.store.AddBeer(ctx, code, attendee, drinkName, beerEq); err != nil {
 		return nil, err
 	}
 	if _, err := s.changed(ctx, code, false); err != nil {
