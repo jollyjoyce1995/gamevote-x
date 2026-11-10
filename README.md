@@ -1,198 +1,82 @@
 # GameVote
 
-A real-time party voting application for selecting games to play together. Built with Go backend and Vue.js frontend.
+A small real-time app for picking which game a group plays: nominate games
+(searched on Steam), vote, see the results. It also counts beers per person.
+Built for a few friends, so it is designed to idle on almost nothing.
 
-## Project Structure
+## Stack
 
-```
-gamevote-x/
-├── gamevote-api-go/    # Go backend API
-│   ├── cmd/api/        # Main application entry point
-│   ├── internal/       # Internal application code
-│   │   ├── handler/    # HTTP handlers
-│   │   ├── service/    # Business logic
-│   │   ├── storage/    # Database repositories
-│   │   ├── models/     # Data models
-│   │   ├── helpers/    # Utility functions
-│   │   └── logger/     # Logging configuration
-│   └── docs/           # Swagger documentation
-└── gamevote-ui/        # Vue.js frontend
-    ├── src/            # Source code
-    └── public/         # Static assets
-```
+| Part     | Tech |
+|----------|------|
+| Backend  | Go (stdlib `net/http`, `pgx`), one static binary |
+| Database | PostgreSQL, tuned for a tiny workload (see `docker-compose.yml`) |
+| Frontend | Vue 3 + TypeScript + Vite, served by the Go binary |
+| API      | OpenAPI 3 spec -> generated Go server stubs **and** generated TypeScript client |
+| Live updates | Server-Sent Events |
 
-## Features
+Footprint: roughly 25-40 MB for Postgres plus 15-25 MB for the app.
 
-- **Party Management**: Create and manage voting parties with unique codes
-- **Game Nomination**: Add Steam games as voting options
-- **Real-time Voting**: Vote on games with live updates via Server-Sent Events (SSE)
-- **Beer Tracking**: Track beer consumption per attendee
-- **Steam Integration**: Search and add games from Steam's catalog
-- **User Management**: Simple username-based authentication with session persistence
+## Run it
 
-## Tech Stack
-
-### Backend
-- **Go** - Main programming language
-- **Gin** - HTTP web framework
-- **SurrealDB** - Database
-- **Swagger** - API documentation
-- **Server-Sent Events** - Real-time updates
-
-### Frontend
-- **Vue.js 3** - Frontend framework
-- **TypeScript** - Type safety
-- **Bun** - Package manager and build tool
-
-## Prerequisites
-
-- Go 1.21+
-- Node.js 18+
-- Bun (package manager)
-- SurrealDB
-
-## Setup & Installation
-
-### Database Setup
-
-1. Install and start SurrealDB:
 ```bash
-# Install SurrealDB
-curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
-
-# Start SurrealDB
-surreal start --log trace --user root --pass root memory
+cp .env.example .env        # optional: set POSTGRES_PASSWORD
+docker compose up -d --build
 ```
 
-### Backend Setup
+Open http://localhost:8080. Data lives in the `pgdata` volume.
 
-1. Navigate to the backend directory:
+## Develop
+
 ```bash
-cd gamevote-api-go
+docker compose up -d db                     # Postgres on 127.0.0.1:5432
+cd gamevote-api-go && go run ./cmd/api      # API on :8080 (creates the schema itself)
+cd gamevote-ui && bun install && bun run dev  # UI on :5173, proxies /api to :8080
 ```
 
-2. Install dependencies:
-```bash
-go mod download
-```
-
-3. Create environment file (optional):
-```bash
-cp .env.example .env
-```
-
-4. Environment variables:
-```env
-SURREAL_WS=ws://localhost:8000/rpc
-SURREAL_USER=root
-SURREAL_PASS=root
-SURREAL_NS=gamevote
-SURREAL_DB=gamevote
-SERVER_PORT=8080
-```
-
-5. Run the backend:
-```bash
-go run cmd/api/main.go
-```
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-```bash
-cd gamevote-ui
-```
-
-2. Install dependencies:
-```bash
-bun install
-```
-
-3. Start development server:
-```bash
-bun run dev
-```
-
-## Authentication
-
-The application uses a simple username-based authentication system with the following behavior:
-
-- **First Visit**: Users are prompted to enter a username on the login page
-- **Session Persistence**: Username is stored in browser cookies for automatic login
-- **Database Validation**: If a cookie exists but the user is not found in the database, the user is automatically redirected to the login page to re-authenticate
-- **Auto-Registration**: New usernames are automatically registered in the database upon first login
-
-## Usage
-
-1. Open your browser and navigate to `http://localhost:5173`
-2. Enter a username if prompted (first visit or invalid session)
-3. Create a new party or join existing one with a party code
-4. Add attendees to the party
-5. Nominate games by searching Steam's catalog
-6. Start voting phase when ready
-7. Vote on games (thumbs up/down/neutral)
-8. View results when all attendees have voted
-
-## API Documentation
-
-The API documentation is available via Swagger at:
-`http://localhost:8080/swagger/index.html`
-
-## Development
-
-### Generate API Client
-
-The frontend uses a generated TypeScript client. To regenerate:
+Tests run against a real Postgres:
 
 ```bash
 cd gamevote-api-go
-./scripts/generate-ts-client.sh
+DATABASE_URL=postgres://gamevote:gamevote@localhost:5432/gamevote?sslmode=disable go test ./...
 ```
 
-### Key Endpoints
+## The API contract
 
-- `GET /parties` - List all parties
-- `POST /parties` - Create a new party
-- `GET /parties/{code}` - Get party details
-- `GET /parties/{code}/stream` - SSE stream for real-time updates
-- `POST /parties/{code}/votes/{attendee}` - Submit votes
-- `GET /games?q=search` - Search Steam games
+`gamevote-api-go/api/openapi.yaml` is the single source of truth. After editing it:
 
-## Architecture
+```bash
+cd gamevote-api-go && go generate ./api     # Go server types + handler interface
+cd gamevote-ui && bun run generate          # TypeScript client in src/generated-api
+```
 
-### Party States
-- **NOMINATION**: Adding games and attendees
-- **VOTING**: Attendees vote on nominated games
-- **RESULTS**: Display voting results
+Both generated outputs are committed. The Go compiler then tells you which handlers
+to update, and `bun run type-check` tells you which frontend calls to fix.
 
-### Real-time Updates
-Uses Server-Sent Events (SSE) to broadcast:
-- Party state changes
-- Online user list updates
-- Outstanding voters updates
+| Operation | Endpoint |
+|-----------|----------|
+| `login` | `POST /api/login` - register-or-login, also used to validate a stored username |
+| `listUsers` | `GET /api/users` |
+| `listDrinks` / `createDrink` | `GET` / `POST /api/drinks` |
+| `searchGames` | `GET /api/games?q=` - live Steam store search (cached 10 min) |
+| `listParties` / `createParty` | `GET` / `POST /api/parties` |
+| `getParty` | `GET /api/parties/{code}` |
+| `setPartyStatus` | `PUT /api/parties/{code}/status` - also starts the next round (RESULTS -> NOMINATION) |
+| `joinParty` | `PUT /api/parties/{code}/attendees/{username}` |
+| `addOption` / `removeOption` | `POST /api/parties/{code}/options`, `DELETE .../options/{name}` |
+| `submitVotes` | `PUT /api/parties/{code}/votes/{username}` |
+| `addBeer` | `POST /api/parties/{code}/beers` |
+| `streamParty` | `GET /api/parties/{code}/stream?username=` (SSE: `party_updated`, `online_users`) |
 
-### Authentication Flow
-- Username-based sessions with cookie persistence
-- Automatic user registration on first login
-- Session validation against database on each request
-- Automatic redirect to login page if cookie exists but user not found in database
+## How a party works
 
-### Database Schema
-- **parties**: Party information and state
-- **polls**: Individual voting sessions
-- **users**: User accounts
-- **games**: Steam game cache
-- **beers**: Beer consumption tracking
-- **drink_types**: Drink presets
+`NOMINATION` (add games) -> `VOTING` (-1 / 0 / +1 per game) -> `RESULTS`. The party moves
+to `RESULTS` by itself when the last attendee votes. From `RESULTS`, "new round" goes back
+to `NOMINATION` with the round counter increased; earlier rounds' results stay visible.
 
-## Contributing
+## Notes
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-[Add your license information here]
+- Identity is just a username kept in a cookie - no passwords. Anyone who can reach
+  the server can act as anyone. Fine for friends on a LAN or behind a VPN; put real
+  auth in front of it before exposing it to the internet.
+- Config is by environment variable: `DATABASE_URL`, `PORT`, `STATIC_DIR`, `LOG_LEVEL`, `LOG_FORMAT`.
+- The schema is in `gamevote-api-go/internal/store/schema.sql` and is applied (idempotently) on start.

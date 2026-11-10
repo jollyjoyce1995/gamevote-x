@@ -14,9 +14,9 @@
       <span class="text-2xl">🎮</span>
     </div>
     <div class="flex gap-4 text-sm" style="color:var(--c-muted)">
-      <span>👥 {{ party.attendees?.length || 0 }}</span>
-      <span>📋 {{ party.options?.length || 0 }} games</span>
-      <span>🍺 {{ party.beerCount || 0 }}</span>
+      <span>👥 {{ party.attendeeCount }}</span>
+      <span>📋 {{ party.optionCount }} games</span>
+      <span>🍺 {{ party.beerCount }}</span>
     </div>
   </RouterLink>
 </template>
@@ -24,10 +24,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import type { ServicePartyDto as PartyDTO } from '@/generated-api'
+import type { PartySummary } from '@/generated-api'
 
 const props = defineProps<{
-  party: PartyDTO
+  party: PartySummary
 }>()
 
 const statusBadge = computed(() => ({

@@ -66,18 +66,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { createParty, postAttendee, getUsers } from '@/api-client'
-import type { ServiceUserDto as UserDTO } from '@/generated-api'
+import { createParty, listUsers } from '@/api-client'
+import type { User } from '@/generated-api'
 
 const router = useRouter()
-const allUsers = ref<UserDTO[]>([])
+const allUsers = ref<User[]>([])
 const attendees = ref<string[]>([])
 const loading = ref(false)
 const error = ref('')
 
 onMounted(async () => {
   try {
-    const usersResp = await getUsers()
+    const usersResp = await listUsers()
     allUsers.value = usersResp.data || []
     // Preselect everyone
     attendees.value = allUsers.value.map(u => u.username || '')
@@ -101,13 +101,9 @@ async function handleCreate() {
   loading.value = true
   error.value = ''
   try {
-    const partyResp = await createParty({ body: {} })
-    const partyCode = partyResp.data?.code!
-    // Add each attendee via the API
-    for (const a of attendees.value) {
-      await postAttendee({ path: { code: partyCode }, body: { value: a } }).catch(() => {})
-    }
-    router.push(`/parties/${partyCode}`)
+    const partyResp = await createParty({ body: { attendees: attendees.value } })
+    if (!partyResp.data) throw new Error(partyResp.error?.error || 'Failed to create party')
+    router.push(`/parties/${partyResp.data.code}`)
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Failed to create party'
   } finally {

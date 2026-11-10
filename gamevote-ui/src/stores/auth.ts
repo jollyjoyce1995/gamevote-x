@@ -1,21 +1,19 @@
 import {defineStore} from 'pinia'
 import {ref} from 'vue'
 import Cookies from 'js-cookie'
-import {validateUser, login as apiLogin} from '@/api-client'
-import {resolve} from "chart.js/helpers";
+import {login as apiLogin} from '@/api-client'
 
 export const useAuthStore = defineStore('auth', () => {
     const username = ref<string | undefined>(Cookies.get('username'))
     const isValidating = ref(false)
 
     async function login(name: string) {
-        username.value = name
-        Cookies.set('username', name)
-        try {
-            await apiLogin({body: {username: name}})
-        } catch (e) {
-            console.error(e)
+        const response = await apiLogin({body: {username: name}})
+        if (response.error) {
+            throw new Error(response.error.error)
         }
+        username.value = response.data.username
+        Cookies.set('username', response.data.username, {expires: 365})
     }
 
     async function validateSession(): Promise<boolean> {
@@ -27,25 +25,19 @@ export const useAuthStore = defineStore('auth', () => {
 
         isValidating.value = true
 
-        const response = await validateUser({
-            path: {
-                username: cookieUsername
-            }
-        })
+        // Logging in is idempotent: it re-registers the name if the database
+        // was reset and refreshes the last-login time.
+        const response = await apiLogin({body: {username: cookieUsername}})
+        isValidating.value = false
 
-        if(response.error) {
-            // User doesn't exist in database, clear invalid cookie
-            console.warn('Session invalid: user not found in database, clearing cookie')
+        if (response.error) {
+            console.warn('Session invalid, clearing cookie')
             username.value = undefined
             Cookies.remove('username')
-            console.log("asdf4")
-            isValidating.value = false
             return false
-        }else{
-            username.value = cookieUsername
-            isValidating.value = false
-            return true
         }
+        username.value = response.data.username
+        return true
     }
 
     function logout() {

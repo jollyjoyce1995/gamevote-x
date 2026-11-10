@@ -1,8 +1,8 @@
 import { client } from './generated-api/client.gen'
 
-client.setConfig({
-    baseUrl: 'http://localhost:8080',
-})
+// The Go server serves the UI and the API from the same origin
+// (in dev, vite proxies /api to it).
+client.setConfig({ baseUrl: '/api' })
 
 export * from './generated-api'
 export { client }

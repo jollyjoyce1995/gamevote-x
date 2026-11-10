@@ -1,121 +1,77 @@
 package main
 
 import (
-	"os"
-
-	"gamevote-api-go/internal/handler"
-	"gamevote-api-go/internal/logger"
-	"gamevote-api-go/internal/service"
-	"gamevote-api-go/internal/storage"
+	"context"
+	"errors"
 	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-
-	_ "gamevote-api-go/docs" // Import swagger docs
+	"gamevote-api-go/internal/server"
+	"gamevote-api-go/internal/steam"
+	"gamevote-api-go/internal/store"
 )
 
-// @title           GameVote API
-// @version         1.0
-// @description     API for the GameVote application to manage parties, polls, and votes.
-// @host            localhost:8080
-// @BasePath        /
 func main() {
-	if err := godotenv.Load(); err != nil {
-		slog.Warn("No .env file found, using default environment variables")
-	}
+	initLogger()
 
-	logger.Init()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	// Initialize Surreal DB
-	slog.Info("Initializing Surreal database...")
-	if err := storage.InitDB(); err != nil {
-		slog.Error("Failed to initialize database", "error", err)
+	st, err := store.Open(ctx, env("DATABASE_URL", "postgres://gamevote:gamevote@localhost:5432/gamevote"))
+	if err != nil {
+		slog.Error("database setup failed", "error", err)
 		os.Exit(1)
 	}
-	defer storage.CloseDB()
+	defer st.Close()
 
-	// SSE Broker (must be created before services)
-	broker := service.Broker
-
-	// Repositories
-	partyRepo := &storage.PartyRepository{}
-	pollRepo := &storage.PollRepository{}
-	beerRepo := &storage.BeerRepository{}
-	voteRepo := &storage.VoteRepository{}
-	userRepo := &storage.UserRepository{}
-	drinkTypeRepo := &storage.DrinkTypeRepository{}
-	gameRepo := &storage.GameRepository{}
-
-	// Services
-	pollService := service.NewPollService(pollRepo, voteRepo)
-	userService := service.NewUserService(userRepo)
-	partyService := service.NewPartyService(partyRepo, beerRepo, pollService, userService, broker)
-	drinkTypeService := service.NewDrinkTypeService(drinkTypeRepo)
-	steamWorker := service.NewSteamWorker(gameRepo)
-
-	// Seed presets & start background workers
-	if err := drinkTypeService.SeedPresets(); err != nil {
-		slog.Error("Failed to seed drink presets", "error", err)
-	}
-	steamWorker.Start()
-
-	// Handlers
-	partyHandler := handler.NewPartyHandler(partyService, broker)
-	userHandler := handler.NewUserHandler(userService)
-	drinkTypeHandler := handler.NewDrinkTypeHandler(drinkTypeService)
-	gameHandler := handler.NewGameHandler(steamWorker)
-
-	router := gin.Default()
-
-	// CORS for frontend dev server
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
-		AllowCredentials: true,
-	}))
-
-	// Swagger setup
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	// User routes
-	router.POST("/users", userHandler.Login)
-	router.GET("/users", userHandler.GetUsers)
-	router.GET("/users/:username", userHandler.ValidateUser)
-
-	// Drink preset routes
-	router.GET("/drinks/presets", drinkTypeHandler.GetDrinkTypes)
-	router.POST("/drinks/presets", drinkTypeHandler.PostDrinkType)
-
-	// Game search route
-	router.GET("/games", gameHandler.SearchGames)
-
-	// Party routes
-	router.GET("/parties", partyHandler.GetParties)
-	router.POST("/parties", partyHandler.CreateParty)
-	router.GET("/parties/:code", partyHandler.GetParty)
-	router.PATCH("/parties/:code", partyHandler.PatchParty)
-	router.POST("/parties/:code/next-round", partyHandler.PostNextRound)
-	router.GET("/parties/:code/stream", partyHandler.StreamParty)
-	router.POST("/parties/:code/options", partyHandler.PostOption)
-	router.DELETE("/parties/:code/options/:gameName", partyHandler.DeleteOption)
-	router.POST("/parties/:code/attendees", partyHandler.PostAttendee)
-	router.DELETE("/parties/:code/attendees/:attendeeId", partyHandler.DeleteAttendee)
-	router.POST("/parties/:code/beers", partyHandler.PostBeer)
-	router.POST("/parties/:code/votes/:attendee", partyHandler.PostVote)
-
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "8080"
+	staticDir := env("STATIC_DIR", "web")
+	if _, err := os.Stat(staticDir); err != nil {
+		slog.Info("not serving a frontend (STATIC_DIR not found)", "dir", staticDir)
+		staticDir = ""
 	}
 
-	slog.Info("Starting server", "port", port)
-	if err := router.Run("127.0.0.1:" + port); err != nil {
-		slog.Error("Failed to start server", "error", err)
+	broker := server.NewBroker()
+	srv := &http.Server{
+		Addr:              ":" + env("PORT", "8080"),
+		Handler:           server.New(st, broker, steam.New()).Handler(staticDir),
+		ReadHeaderTimeout: 10 * time.Second,
+		// No WriteTimeout: it would cut the long-lived SSE streams.
+	}
+
+	go func() {
+		<-ctx.Done()
+		slog.Info("shutting down")
+		broker.Close()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdownCtx)
+	}()
+
+	slog.Info("listening", "addr", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}
+}
+
+func env(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func initLogger() {
+	var level slog.Level
+	_ = level.UnmarshalText([]byte(os.Getenv("LOG_LEVEL"))) // empty/unknown -> info
+	opts := &slog.HandlerOptions{Level: level}
+	if os.Getenv("LOG_FORMAT") == "json" {
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, opts)))
+		return
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 }

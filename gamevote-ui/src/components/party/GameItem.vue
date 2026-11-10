@@ -28,11 +28,11 @@
 
 <script setup lang="ts">
 import {computed} from 'vue'
-import type {ModelsPartyOption} from '@/generated-api'
+import type {PartyOption} from '@/generated-api'
 
 const props = defineProps<{
   mode: 'suggestion' | 'nominated' | 'voting',
-  game: ModelsPartyOption,
+  game: PartyOption,
   like?: number,
 }>()
 
@@ -53,7 +53,7 @@ function handleClick() {
   }
 }
 
-function setVote(game: ModelsPartyOption, like: number) {
+function setVote(game: PartyOption, like: number) {
   emit('like', game.name!, like)
 }
 </script>
