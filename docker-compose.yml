@@ -1,8 +1,10 @@
 # GameVote: Go server (serves the Vue app too) + a Postgres tuned for a tiny
 # workload. Expected footprint: ~25-40 MB for Postgres, ~15-25 MB for the app.
 #
-#   docker compose up -d --build        -> http://localhost:8080
-#   docker compose up -d db             -> only the database (for local development)
+#   docker compose pull && docker compose up -d   -> http://localhost:8080
+#   docker compose up -d db                       -> only the database (for local development)
+#
+# The app image comes from GHCR. Pin a release with GAMEVOTE_TAG=0.1.0 (default: latest).
 
 services:
   db:
@@ -26,7 +28,7 @@ services:
     mem_limit: 128m
 
   app:
-    build: .
+    image: ghcr.io/jollyjoyce1995/gamevote-x:${GAMEVOTE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       db:
