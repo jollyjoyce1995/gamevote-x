@@ -40,6 +40,11 @@ func (s *Server) Handler(staticDir string) http.Handler {
 		BaseURL:          "/api",
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) { writeError(w, store.Invalid("%v", err)) },
 	})
+	// Liveness probe for the container healthcheck: deliberately skips the database,
+	// so a Postgres hiccup doesn't get the app restarted. Not part of the public spec.
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeError(w, store.NotFound("no such endpoint"))
 	})
