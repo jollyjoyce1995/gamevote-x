@@ -1,4 +1,4 @@
-# GameVote
+# GameVote X
 
 A small real-time app for picking which game a group plays: nominate games
 (searched on Steam), vote, see the results. It also counts beers per person.

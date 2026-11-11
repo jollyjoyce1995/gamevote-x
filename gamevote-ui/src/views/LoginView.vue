@@ -2,8 +2,8 @@
   <main class="min-h-screen flex items-center justify-center p-4">
     <div class="card w-full max-w-sm text-center">
       <div class="mb-8">
-        <div class="text-5xl mb-3">🎲</div>
-        <h1 class="text-3xl font-extrabold grad-text mb-1">GameVote</h1>
+        <img src="/logo.svg" alt="GameVote X logo" class="h-20 w-20 mx-auto mb-3" />
+        <h1 class="text-3xl font-extrabold grad-text mb-1">GameVote X</h1>
         <p class="text-sm" style="color:var(--c-muted)">Vote on what to play tonight</p>
       </div>
 

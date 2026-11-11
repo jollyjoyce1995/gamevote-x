@@ -1,4 +1,4 @@
-# GameVote: Go server (serves the Vue app too) + a Postgres tuned for a tiny
+# GameVote X: Go server (serves the Vue app too) + a Postgres tuned for a tiny
 # workload. Expected footprint: ~25-40 MB for Postgres, ~15-25 MB for the app.
 #
 #   docker compose pull && docker compose up -d   -> http://localhost:8080

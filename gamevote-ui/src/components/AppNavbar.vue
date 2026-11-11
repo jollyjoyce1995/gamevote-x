@@ -2,7 +2,10 @@
   <nav class="glass sticky top-0 z-50 px-6 py-2 flex items-center justify-between gap-4">
     <!-- Left: Logo + Party code -->
     <div class="flex items-center gap-4">
-      <RouterLink to="/" class="text-3xl font-extrabold grad-text tracking-tight">🎲 GameVote</RouterLink>
+      <RouterLink to="/" class="flex items-center gap-2.5 text-3xl font-extrabold grad-text tracking-tight">
+        <img src="/logo.svg" alt="" class="h-9 w-9" />
+        <span>GameVote X</span>
+      </RouterLink>
       <template v-if="partyCode">
         <span class="text-muted text-lg">›</span>
         <span class="text-lg font-semibold text-indigo-300">{{ partyCode }}</span>
