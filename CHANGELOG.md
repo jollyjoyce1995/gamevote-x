@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/jollyjoyce1995/gamevote-x/compare/v1.0.0...v1.1.0) (2026-11-11)
+
+
+### Features
+
+* add /healthz liveness endpoint for the container healthcheck ([df7ba18](https://github.com/jollyjoyce1995/gamevote-x/commit/df7ba18c36373b3d0c5f6cfb262842f4d58398d8))
+* rename app to GameVote X with a pixel-art beer mug logo ([cab8250](https://github.com/jollyjoyce1995/gamevote-x/commit/cab8250eb384dec60bc8194f6d6cb172181e25a0))
+* stable preset ids, derived beer equivalent, zoomable consumption timeline ([a128f14](https://github.com/jollyjoyce1995/gamevote-x/commit/a128f142b56b02b015f9676b986fb24df3ee41e0))
+
+
+### Bug Fixes
+
+* make postgres listen on all interfaces so the app can connect ([83eddb9](https://github.com/jollyjoyce1995/gamevote-x/commit/83eddb94c2b6c6470fec2002203fdd71afa60ea9))
+* skip GHA cache export on pull requests ([ccee18a](https://github.com/jollyjoyce1995/gamevote-x/commit/ccee18ae7a1800cc843197a064d4a9acd7072230))
+
 ## 1.0.0 (2026-11-10)
 
 
