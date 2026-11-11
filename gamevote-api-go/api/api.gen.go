@@ -65,7 +65,7 @@ type CreatePartyRequest struct {
 type DrinkType struct {
 	AlcoholPercent float32 `json:"alcoholPercent"`
 
-	// BeerEquivalent How many 0.5l beers this drink equals
+	// BeerEquivalent Derived, not stored: volumeMl * alcoholPercent / 2500 (one 0.5l beer at 5% = 25 ml pure alcohol = 1.0)
 	BeerEquivalent float32 `json:"beerEquivalent"`
 	Id             int     `json:"id"`
 	Name           string  `json:"name"`
@@ -92,11 +92,10 @@ type LoginRequest struct {
 
 // NewDrinkType defines model for NewDrinkType.
 type NewDrinkType struct {
-	AlcoholPercent float32  `json:"alcoholPercent"`
-	BeerEquivalent *float32 `json:"beerEquivalent,omitempty"`
-	Name           string   `json:"name"`
-	UnitName       string   `json:"unitName"`
-	VolumeMl       int      `json:"volumeMl"`
+	AlcoholPercent float32 `json:"alcoholPercent"`
+	Name           string  `json:"name"`
+	UnitName       string  `json:"unitName"`
+	VolumeMl       int     `json:"volumeMl"`
 }
 
 // Party defines model for Party.

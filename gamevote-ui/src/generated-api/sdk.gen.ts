@@ -45,7 +45,7 @@ export const listDrinks = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * Add a custom drink preset
  *
- * If `beerEquivalent` is omitted or 0 it is derived from volume and alcohol percentage.
+ * The returned `beerEquivalent` is derived from volume and alcohol percentage.
  */
 export const createDrink = <ThrowOnError extends boolean = false>(options: Options<CreateDrinkData, ThrowOnError>) => (options.client ?? client).post<CreateDrinkResponses, CreateDrinkErrors, ThrowOnError>({
     url: '/drinks',

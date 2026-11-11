@@ -145,14 +145,7 @@ func (s *Server) CreateDrink(ctx context.Context, req api.CreateDrinkRequestObje
 	if d.VolumeMl <= 0 || d.AlcoholPercent < 0 || d.AlcoholPercent > 100 {
 		return nil, store.Invalid("volumeMl must be positive and alcoholPercent between 0 and 100")
 	}
-	// One 0.5l beer at 5% (25 ml of pure alcohol) is the reference.
-	var beerEq float32
-	if d.BeerEquivalent != nil && *d.BeerEquivalent > 0 {
-		beerEq = *d.BeerEquivalent
-	} else {
-		beerEq = float32(d.VolumeMl) * d.AlcoholPercent / 100 / 25
-	}
-	created, err := s.store.CreateDrink(ctx, d, beerEq)
+	created, err := s.store.CreateDrink(ctx, d)
 	if err != nil {
 		return nil, err
 	}

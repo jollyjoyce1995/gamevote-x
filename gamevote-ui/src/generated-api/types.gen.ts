@@ -39,7 +39,6 @@ export type NewDrinkType = {
     name: string;
     volumeMl: number;
     alcoholPercent: number;
-    beerEquivalent?: number;
     unitName: string;
 };
 
@@ -49,7 +48,7 @@ export type DrinkType = {
     volumeMl: number;
     alcoholPercent: number;
     /**
-     * How many 0.5l beers this drink equals
+     * Derived, not stored: volumeMl * alcoholPercent / 2500 (one 0.5l beer at 5% = 25 ml pure alcohol = 1.0)
      */
     beerEquivalent: number;
     unitName: string;

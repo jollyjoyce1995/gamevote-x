@@ -231,7 +231,7 @@
                   <span>🍺</span>
                   <span>1. The Benchmark</span>
                 </div>
-                <div class="text-white text-xs sm:text-sm font-semibold mb-1">Standard Halbe (500 ml @ 5.0%)</div>
+                <div class="text-white text-xs sm:text-sm font-semibold mb-1">Standard Half Liter (500 ml @ 5.0%)</div>
                 <p class="text-xs text-muted leading-relaxed">
                   1.0 beer equivalent equals exactly <strong>25 ml</strong> of pure ethanol:
                 </p>
@@ -392,7 +392,7 @@
               {{ dt.name }}
             </div>
             <div class="text-xs text-muted truncate w-full text-center mt-0.5">
-              {{ dt.unitName || `${dt.volumeMl}ml` }}
+              {{ drinkSubtitle(dt) }}
             </div>
             <div class="mt-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 group-hover:bg-indigo-500/20 group-hover:border-indigo-500/40 group-hover:text-indigo-300 transition-colors">
               ≈ {{ getDrinkBeerEq(dt) }} 🍺
@@ -452,7 +452,7 @@
                   {{ dt.name }}
                 </div>
                 <div class="text-xs text-muted truncate w-full text-center mt-0.5">
-                  {{ dt.unitName || 'Custom' }}
+                  {{ drinkSubtitle(dt, 'Custom') }}
                 </div>
                 <div class="mt-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300">
                   ≈ {{ getDrinkBeerEq(dt) }} 🍺
@@ -832,9 +832,16 @@
               <span class="text-xs font-normal text-muted">Real-world pacing & cumulative beers</span>
             </h3>
           </div>
-          <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-white/5 text-muted border border-white/10">
-            All Attendees
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="hidden sm:inline text-xs text-muted">🖱️ Scroll to zoom · drag to pan</span>
+            <button
+              v-if="timelineZoomed"
+              class="text-xs px-2.5 py-1 rounded-full font-semibold bg-indigo-500/15 text-indigo-200 border border-indigo-400/30 hover:bg-indigo-500/25 transition-colors"
+              @click="resetTimelineZoom"
+            >
+              Reset zoom
+            </button>
+          </div>
         </div>
 
         <div v-if="!rawBeerLog.length" class="flex flex-col items-center justify-center py-16 text-center text-muted">
@@ -986,8 +993,11 @@ import {
   Legend,
   BarController,
   LineController,
-  Filler
+  Filler,
+  TimeScale
 } from 'chart.js'
+import zoomPlugin from 'chartjs-plugin-zoom'
+import 'chartjs-adapter-date-fns'
 
 Chart.register(
   BarElement,
@@ -999,7 +1009,9 @@ Chart.register(
   Legend,
   BarController,
   LineController,
-  Filler
+  Filler,
+  TimeScale,
+  zoomPlugin
 )
 
 const route = useRoute()
@@ -1044,6 +1056,7 @@ const DEFAULT_PRESET_NAMES = new Set([
   'klopfer',
   'nussschnaps',
   'nuss schnaps',
+  'nut schnapps',
   'tatra tea black',
   'tatra tea',
   'tatra',
@@ -1124,6 +1137,13 @@ const partyCustomDrinks = computed(() => {
   return result
 })
 
+// "Shot · 20 ml" under each quick-log button.
+function drinkSubtitle(dt: { unitName?: string; volumeMl?: number }, fallback = ''): string {
+  const unit = dt.unitName || fallback
+  if (!dt.volumeMl) return unit
+  return unit ? `${unit} · ${dt.volumeMl} ml` : `${dt.volumeMl} ml`
+}
+
 // ── Dynamic Beer-Equivalent Calculation & Guide State ───────────────────────
 function getDrinkBeerEq(dt: { volumeMl?: number; alcoholPercent?: number; beerEquivalent?: number }): number {
   if (dt.volumeMl && dt.volumeMl > 0 && dt.alcoholPercent && dt.alcoholPercent > 0) {
@@ -1133,7 +1153,7 @@ function getDrinkBeerEq(dt: { volumeMl?: number; alcoholPercent?: number; beerEq
 }
 
 // Live interactive converter inputs
-const guideCalcVolume = ref<number>(40)
+const guideCalcVolume = ref<number>(20)
 const guideCalcAbv = ref<number>(40.0)
 
 const guideCalcPureMl = computed(() => {
@@ -1161,10 +1181,10 @@ interface GuideQuickPreset {
 
 const guideQuickPillPresets: GuideQuickPreset[] = [
   { label: '💥 Klopfer (20ml @ 16%)', volume: 20, abv: 16.0 },
-  { label: '🥃 Shot (40ml @ 40%)', volume: 40, abv: 40.0 },
+  { label: '🥃 Shot (20ml @ 40%)', volume: 20, abv: 40.0 },
   { label: '🍋 Radler (500ml @ 2.5%)', volume: 500, abv: 2.5 },
   { label: '🥫 Beer Can (330ml @ 5%)', volume: 330, abv: 5.0 },
-  { label: '🍺 Halbe (500ml @ 5%)', volume: 500, abv: 5.0 },
+  { label: '🍺 Half Liter (500ml @ 5%)', volume: 500, abv: 5.0 },
   { label: '🍷 Wine Glass (200ml @ 12.5%)', volume: 200, abv: 12.5 },
   { label: '🍹 Cocktail (300ml @ 15%)', volume: 300, abv: 15.0 },
 ]
@@ -1176,11 +1196,11 @@ function setGuidePreset(vol: number, abv: number) {
 
 const referenceExamples = [
   { name: 'Klopfer', emoji: '💥', vol: 20, abv: 16.0, beerEq: '0.13' },
-  { name: 'Schnaps Shot', emoji: '🥃', vol: 20, abv: 35.0, beerEq: '0.28' },
-  { name: 'Standard Shot', emoji: '🥃', vol: 40, abv: 40.0, beerEq: '0.64' },
+  { name: 'Schnapps Shot', emoji: '🥃', vol: 20, abv: 35.0, beerEq: '0.28' },
+  { name: 'Standard Shot', emoji: '🥃', vol: 20, abv: 40.0, beerEq: '0.32' },
   { name: 'Small Beer', emoji: '🥫', vol: 330, abv: 5.0, beerEq: '0.66' },
   { name: 'Radler', emoji: '🍋', vol: 500, abv: 2.5, beerEq: '0.50' },
-  { name: 'Standard Halbe', emoji: '🍺', vol: 500, abv: 5.0, beerEq: '1.00' },
+  { name: 'Standard Half Liter', emoji: '🍺', vol: 500, abv: 5.0, beerEq: '1.00' },
   { name: 'Glass of Wine', emoji: '🍷', vol: 200, abv: 12.5, beerEq: '1.00' },
   { name: 'Strong Cocktail', emoji: '🍹', vol: 300, abv: 15.0, beerEq: '1.80' },
 ]
@@ -1547,7 +1567,7 @@ interface CategoryPreset {
 }
 
 const categoryPresets: CategoryPreset[] = [
-  { label: 'Shot', emoji: '🥃', volumeMl: 40, alcoholPercent: 40.0, unitName: 'Shot' },
+  { label: 'Shot', emoji: '🥃', volumeMl: 20, alcoholPercent: 40.0, unitName: 'Shot' },
   { label: 'Pint', emoji: '🍺', volumeMl: 500, alcoholPercent: 5.0, unitName: 'Pint' },
   { label: 'Bottle / Can', emoji: '🥫', volumeMl: 330, alcoholPercent: 5.0, unitName: 'Can' },
   { label: 'Wine Glass', emoji: '🍷', volumeMl: 150, alcoholPercent: 12.0, unitName: 'Glass' },
@@ -1560,7 +1580,7 @@ const activeCategoryEmoji = ref<string>('🥃')
 
 const custom = ref({
   name: '',
-  volumeMl: 40,
+  volumeMl: 20,
   alcoholPercent: 40.0,
   unitName: 'Shot'
 })
@@ -1610,6 +1630,7 @@ const drinkEmojis: Record<string, string> = {
   tatra: '🫖',
   nussschnaps: '🌰',
   'nuss schnaps': '🌰',
+  'nut schnapps': '🌰',
   'weißer rum': '🥃',
   'weisser rum': '🥃',
   'white rum': '🥃',
@@ -1777,7 +1798,6 @@ async function addCustomDrink() {
         name,
         volumeMl: custom.value.volumeMl,
         alcoholPercent: custom.value.alcoholPercent,
-        beerEquivalent: beerEq,
         unitName: custom.value.unitName || 'Custom',
       },
     })
@@ -1810,6 +1830,13 @@ const bacChartEl = ref<HTMLCanvasElement | null>(null)
 let barChart: Chart | null = null
 let lineChart: Chart | null = null
 let bacChart: Chart | null = null
+
+interface TimelinePoint { x: number; y: number; drink?: string; delta?: number }
+const timelineZoomed = ref(false)
+function resetTimelineZoom() {
+  lineChart?.resetZoom()
+  timelineZoomed.value = false
+}
 
 const palette = [
   '#6366f1', '#8b5cf6', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#10b981', '#3b82f6', '#f43f5e'
@@ -1867,99 +1894,150 @@ function renderCharts() {
     })
   }
 
-  // 2. Line Chart (Consumption Over Time with REAL Timestamps)
+  // 2. Line Chart (Consumption Over Time, real timestamps, wheel zoom on the x axis)
   if (lineChartEl.value && (activeChartTab.value === 'timeline' || activeChartTab.value === 'all')) {
     if (lineChart) lineChart.destroy()
+    timelineZoomed.value = false
 
     if (logEntries.length > 0) {
-      // Sort chronologically
       const sorted = [...logEntries].sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       )
+      const first = new Date(sorted[0]!.createdAt).getTime()
+      const last = new Date(sorted[sorted.length - 1]!.createdAt).getTime()
+      // Breathing room so a single drink (or a short session) doesn't hug the axes.
+      const pad = Math.max(60_000, (last - first) * 0.05)
+      const tStart = first - pad
+      const tEnd = last + pad
 
-      const allAttendees = attendeeList.value
-      const runningTotals: Record<string, number> = {}
-      const attendeeSeries: Record<string, number[]> = {}
-      for (const a of allAttendees) {
-        runningTotals[a] = 0
-        attendeeSeries[a] = []
-      }
-
-      const timeLabels: string[] = []
-
+      // One point per drink (a cumulative step), anchored at 0 and extended to the end.
+      const series: Record<string, TimelinePoint[]> = {}
+      for (const a of attendeeList.value) series[a] = [{ x: tStart, y: 0 }]
       for (const entry of sorted) {
-        const timeStr = formatFullTime(entry.createdAt)
-        timeLabels.push(timeStr)
-
-        runningTotals[entry.attendee] = (runningTotals[entry.attendee] ?? 0) + (entry.beerEquivalent || 0)
-        for (const a of allAttendees) {
-          const list = attendeeSeries[a] || []
-          list.push(parseFloat((runningTotals[a] ?? 0).toFixed(2)))
-          attendeeSeries[a] = list
-        }
+        const points = (series[entry.attendee] ??= [{ x: tStart, y: 0 }])
+        const prev = points[points.length - 1]!.y
+        points.push({
+          x: new Date(entry.createdAt).getTime(),
+          y: parseFloat((prev + (entry.beerEquivalent || 0)).toFixed(2)),
+          drink: entry.drinkName,
+          delta: entry.beerEquivalent || 0,
+        })
       }
+      for (const points of Object.values(series)) points.push({ x: tEnd, y: points[points.length - 1]!.y })
 
-      const datasets = allAttendees.map((attendee, idx) => {
-        const color = attendee === currentUser.value ? '#6366f1' : palette[idx % palette.length]
+      const datasets = Object.entries(series).map(([attendee, data], idx) => {
+        const color = attendee === currentUser.value ? '#818cf8' : palette[idx % palette.length]!
+        const isMe = attendee === currentUser.value
         return {
           label: attendee,
-          data: attendeeSeries[attendee] || [],
+          data,
           borderColor: color,
-          backgroundColor: color + '22',
-          borderWidth: attendee === currentUser.value ? 3 : 2,
-          fill: false,
-          tension: 0.35,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          borderWidth: isMe ? 3 : 2,
+          stepped: 'after' as const,
+          fill: 'origin' as const,
+          // Soft fade from the line down to the axis.
+          backgroundColor: (ctx: { chart: Chart }) => {
+            const area = ctx.chart.chartArea
+            if (!area) return color + '00'
+            const g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom)
+            g.addColorStop(0, color + (isMe ? '44' : '22'))
+            g.addColorStop(1, color + '00')
+            return g
+          },
+          // Markers only where a drink was actually logged, not on the anchor points.
+          pointRadius: (ctx: { raw: unknown }) => ((ctx.raw as TimelinePoint).drink ? 5 : 0),
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#0f1420',
+          pointBorderColor: color,
+          pointBorderWidth: 2,
+          pointHoverBackgroundColor: color,
+          order: isMe ? 0 : 1,
         }
       })
 
       lineChart = new Chart(lineChartEl.value, {
         type: 'line',
-        data: {
-          labels: timeLabels,
-          datasets,
-        },
+        data: { datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false,
-          },
+          animation: { duration: 400 },
+          interaction: { mode: 'nearest', axis: 'x', intersect: false },
           plugins: {
             legend: {
               position: 'top',
+              align: 'end',
               labels: {
-                color: '#e2e8f0',
-                boxWidth: 14,
-                font: { size: 12, weight: 'bold' }
-              }
+                color: '#cbd5e1',
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 16,
+                font: { size: 12, weight: 600 },
+              },
             },
             tooltip: {
+              backgroundColor: 'rgba(15, 20, 32, 0.96)',
+              borderColor: 'rgba(129, 140, 248, 0.35)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 10,
+              titleColor: '#94a3b8',
+              titleFont: { size: 11, weight: 500 },
+              bodyColor: '#f1f5f9',
+              bodyFont: { size: 13, weight: 600 },
+              boxPadding: 4,
+              usePointStyle: true,
               callbacks: {
-                title: (items) => `Time: ${items[0]?.label ?? ''}`,
-                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw} beers`
-              }
-            }
+                title: (items) => (items[0] ? formatFullTime(new Date(items[0].parsed.x as number).toISOString()) : ''),
+                label: (ctx) => {
+                  const p = ctx.raw as TimelinePoint
+                  return ` ${ctx.dataset.label}: ${p.y.toFixed(2)} 🍺`
+                },
+                afterLabel: (ctx) => {
+                  const p = ctx.raw as TimelinePoint
+                  return p.drink ? `   +${(p.delta ?? 0).toFixed(2)} from ${p.drink}` : ''
+                },
+              },
+            },
+            zoom: {
+              limits: { x: { min: tStart, max: tEnd, minRange: 30_000 } },
+              zoom: {
+                wheel: { enabled: true, speed: 0.12 },
+                pinch: { enabled: true },
+                mode: 'x',
+                onZoomComplete: ({ chart }) => { timelineZoomed.value = chart.isZoomedOrPanned() },
+              },
+              pan: {
+                enabled: true,
+                mode: 'x',
+                onPanComplete: ({ chart }) => { timelineZoomed.value = chart.isZoomedOrPanned() },
+              },
+            },
           },
           scales: {
             x: {
-              ticks: {
-                color: '#94a3b8',
-                maxRotation: 45,
-                minRotation: 0,
-                font: { size: 11 }
+              type: 'time',
+              min: tStart,
+              max: tEnd,
+              time: {
+                tooltipFormat: 'HH:mm:ss',
+                displayFormats: { second: 'HH:mm:ss', minute: 'HH:mm', hour: 'HH:mm', day: 'dd MMM' },
               },
-              grid: { color: '#1e2739' }
+              ticks: { color: '#94a3b8', maxRotation: 0, autoSkipPadding: 24, font: { size: 11 } },
+              grid: { color: 'rgba(148, 163, 184, 0.07)' },
+              border: { display: false },
             },
             y: {
               beginAtZero: true,
-              ticks: { color: '#94a3b8', font: { size: 11 } },
-              grid: { color: '#1e2739' }
-            }
-          }
-        }
+              ticks: { color: '#94a3b8', precision: 1, font: { size: 11 }, callback: (v) => Number(v).toFixed(1) },
+              grid: { color: 'rgba(148, 163, 184, 0.07)' },
+              border: { display: false },
+              title: { display: true, text: 'Beer equivalents', color: '#64748b', font: { size: 11, weight: 500 } },
+            },
+          },
+        },
       })
     }
   }

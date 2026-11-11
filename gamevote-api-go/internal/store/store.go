@@ -130,7 +130,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]api.User, error) {
 
 func (s *Store) ListDrinks(ctx context.Context) ([]api.DrinkType, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, name, volume_ml, alcohol_percent, beer_equivalent, unit_name
+		SELECT id, name, volume_ml, alcohol_percent, (volume_ml * alcohol_percent / 2500)::real, unit_name
 		FROM drink_types ORDER BY id`)
 	if err != nil {
 		return nil, err
@@ -147,13 +147,13 @@ func (s *Store) ListDrinks(ctx context.Context) ([]api.DrinkType, error) {
 	return drinks, rows.Err()
 }
 
-func (s *Store) CreateDrink(ctx context.Context, d api.NewDrinkType, beerEquivalent float32) (api.DrinkType, error) {
+func (s *Store) CreateDrink(ctx context.Context, d api.NewDrinkType) (api.DrinkType, error) {
 	var out api.DrinkType
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO drink_types (name, volume_ml, alcohol_percent, beer_equivalent, unit_name)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, name, volume_ml, alcohol_percent, beer_equivalent, unit_name`,
-		d.Name, d.VolumeMl, d.AlcoholPercent, beerEquivalent, d.UnitName).
+		INSERT INTO drink_types (name, volume_ml, alcohol_percent, unit_name)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, name, volume_ml, alcohol_percent, (volume_ml * alcohol_percent / 2500)::real, unit_name`,
+		d.Name, d.VolumeMl, d.AlcoholPercent, d.UnitName).
 		Scan(&out.Id, &out.Name, &out.VolumeMl, &out.AlcoholPercent, &out.BeerEquivalent, &out.UnitName)
 	if pgCode(err) == codeUniqueViolation {
 		return out, Conflict("a drink named %q already exists", d.Name)

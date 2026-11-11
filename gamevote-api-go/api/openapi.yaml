@@ -63,7 +63,7 @@ paths:
     post:
       operationId: createDrink
       summary: Add a custom drink preset
-      description: If `beerEquivalent` is omitted or 0 it is derived from volume and alcohol percentage.
+      description: The returned `beerEquivalent` is derived from volume and alcohol percentage.
       requestBody:
         required: true
         content:
@@ -333,7 +333,6 @@ components:
         name: { type: string }
         volumeMl: { type: integer, minimum: 1 }
         alcoholPercent: { type: number, format: float, minimum: 0, maximum: 100 }
-        beerEquivalent: { type: number, format: float, minimum: 0 }
         unitName: { type: string }
 
     DrinkType:
@@ -344,7 +343,7 @@ components:
         name: { type: string }
         volumeMl: { type: integer }
         alcoholPercent: { type: number, format: float }
-        beerEquivalent: { type: number, format: float, description: How many 0.5l beers this drink equals }
+        beerEquivalent: { type: number, format: float, description: 'Derived, not stored: volumeMl * alcoholPercent / 2500 (one 0.5l beer at 5% = 25 ml pure alcohol = 1.0)' }
         unitName: { type: string }
 
     CreatePartyRequest:
